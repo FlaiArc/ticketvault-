@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TicketVault — Gestión de Entradas</title>
+  <!-- PWA Manifest (inline via data URI) -->
+  <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22TicketVault%22%2C%22short_name%22%3A%22TicketVault%22%2C%22description%22%3A%22Gesti%C3%B3n%20de%20entradas%20de%20conciertos%22%2C%22start_url%22%3A%22.%2F%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230a0a0f%22%2C%22theme_color%22%3A%22%230a0a0f%22%2C%22orientation%22%3A%22portrait-primary%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%253D%2527http%253A%252F%252Fwww.w3.org%252F2000%252Fsvg%2527%2520viewBox%253D%25270%25200%2520100%2520100%2527%253E%253Crect%2520width%253D%2527100%2527%2520height%253D%2527100%2527%2520rx%253D%252720%2527%2520fill%253D%2527%25230a0a0f%2527%252F%253E%253Ctext%2520y%253D%2527.9em%2527%2520font-size%253D%252760%2527%2520x%253D%252720%2527%253E%25F0%259F%258E%259F%253C%252Ftext%253E%253C%252Fsvg%253E%22%2C%22sizes%22%3A%22any%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%2C%22purpose%22%3A%22any%20maskable%22%7D%5D%7D">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="TicketVault">
+  <meta name="theme-color" content="#0a0a0f">
+  <meta name="apple-touch-fullscreen" content="yes">
+
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0a0f;--bg2:#111118;--bg3:#1a1a24;--bg4:#22222f;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);--accent:#c8ff00;--accent3:#06b6d4;--text:#f0f0f8;--text2:#8888aa;--text3:#555570;--green:#22c55e;--red:#ef4444;--yellow:#eab308;--radius:12px;--radius2:8px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+.shell{display:flex;min-height:100vh}
+.sidebar{width:220px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;overflow-y:auto}
+.logo{padding:22px 20px 18px;border-bottom:1px solid var(--border);flex-shrink:0}
+.logo-mark{font-family:'Syne',sans-serif;font-weight:800;font-size:18px;color:var(--accent);letter-spacing:-0.5px}
+.logo-sub{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:2px;text-transform:uppercase;margin-top:2px}
+nav{padding:14px 12px;flex:1}
+.nav-section{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);padding:0 8px;margin:14px 0 5px}
+.nav-section:first-child{margin-top:0}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--radius2);cursor:pointer;color:var(--text2);font-size:13px;transition:all .15s;margin-bottom:2px;border:1px solid transparent;user-select:none}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:rgba(200,255,0,.08);color:var(--accent);border-color:rgba(200,255,0,.15)}
+.nav-item svg{width:15px;height:15px;flex-shrink:0}
+.sidebar-footer{padding:14px 20px;border-top:1px solid var(--border);font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);flex-shrink:0}
+.main{margin-left:220px;flex:1}
+.topbar{padding:18px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--bg);position:sticky;top:0;z-index:50}
+.page-title{font-family:'Syne',sans-serif;font-weight:700;font-size:19px}
+.page-sub{font-size:12px;color:var(--text3);margin-top:1px}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8px 15px;border-radius:var(--radius2);font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .15s;font-family:'DM Sans',sans-serif}
+.btn-primary{background:var(--accent);color:#0a0a0f}.btn-primary:hover{background:#d4ff1a;transform:translateY(-1px)}
+.btn-ghost{background:transparent;border:1px solid var(--border2);color:var(--text2)}.btn-ghost:hover{background:var(--bg3);color:var(--text)}
+.btn-danger{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:var(--red)}.btn-danger:hover{background:rgba(239,68,68,.2)}
+.btn-sm{padding:5px 10px;font-size:12px}
+.content{padding:24px 28px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.card-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-family:'Syne',sans-serif;font-weight:600;font-size:14px}
+/* KPIs */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.kpi-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:18px;position:relative;overflow:hidden}
+.kpi-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.kpi-card.kc-green::after{background:var(--green)}.kpi-card.kc-red::after{background:var(--red)}
+.kpi-card.kc-accent::after{background:var(--accent)}.kpi-card.kc-cyan::after{background:var(--accent3)}
+.kpi-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:6px}
+.kpi-value{font-family:'Syne',sans-serif;font-size:26px;font-weight:700;line-height:1}
+.kv-green{color:var(--green)}.kv-red{color:var(--red)}.kv-accent{color:var(--accent)}.kv-cyan{color:var(--accent3)}
+.kpi-sub{font-size:11px;color:var(--text3);margin-top:5px}
+/* Tables */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+thead tr{border-bottom:1px solid var(--border)}
+th{text-align:left;padding:9px 12px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1.3px;text-transform:uppercase;color:var(--text3);font-weight:400;white-space:nowrap}
+tbody tr{border-bottom:1px solid var(--border);transition:background .1s}
+tbody tr:hover{background:var(--bg3)}
+tbody tr:last-child{border-bottom:none}
+td{padding:9px 12px;font-size:12.5px;vertical-align:middle}
+/* Badges */
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500;font-family:'DM Mono',monospace}
+.bg-green{background:rgba(34,197,94,.12);color:var(--green)}
+.bg-red{background:rgba(239,68,68,.12);color:var(--red)}
+.bg-yellow{background:rgba(234,179,8,.12);color:var(--yellow)}
+.bg-cyan{background:rgba(6,182,212,.12);color:var(--accent3)}
+.bg-gray{background:var(--bg4);color:var(--text2)}
+/* Modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);z-index:1000;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;width:580px;max-width:96vw;max-height:92vh;overflow-y:auto;animation:mIn .2s ease}
+.modal-lg{width:700px}
+@keyframes mIn{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+.modal-header{padding:18px 22px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-family:'Syne',sans-serif;font-weight:700;font-size:16px}
+.modal-body{padding:18px 22px}
+.modal-footer{padding:14px 22px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
+/* Forms */
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fg3{grid-template-columns:1fr 1fr 1fr}
+.field{display:flex;flex-direction:column;gap:4px}
+.s2{grid-column:span 2}.s3{grid-column:span 3}
+label{font-size:11px;font-family:'DM Mono',monospace;letter-spacing:.7px;text-transform:uppercase;color:var(--text2)}
+input,select,textarea{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius2);color:var(--text);padding:8px 11px;font-size:13px;font-family:'DM Sans',sans-serif;width:100%;transition:border-color .15s;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+select option{background:var(--bg3)}
+textarea{resize:vertical;min-height:55px}
+/* Toolbar */
+.toolbar{display:flex;gap:8px;margin-bottom:14px;align-items:center;flex-wrap:wrap}
+.sw{position:relative;flex:1;min-width:160px;max-width:260px}
+.sw svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);width:13px;height:13px;color:var(--text3)}
+.sw input{padding-left:30px}
+/* Year filter tabs */
+.yr-tabs{display:flex;gap:2px;background:var(--bg2);padding:3px;border-radius:var(--radius2);border:1px solid var(--border)}
+.yr-tab{padding:5px 14px;border-radius:6px;cursor:pointer;font-size:12px;color:var(--text2);transition:all .15s;user-select:none;font-family:'DM Mono',monospace}
+.yr-tab:hover{background:var(--bg3);color:var(--text)}
+.yr-tab.active{background:var(--bg4);color:var(--accent)}
+/* Sections */
+.section{display:none}.section.active{display:block}
+/* Concert cards */
+.cc{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;display:flex;align-items:center;gap:12px;margin-bottom:8px;cursor:pointer;transition:all .15s}
+.cc:hover{border-color:var(--border2);background:var(--bg3)}
+.cc-av{width:40px;height:40px;border-radius:9px;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--accent);flex-shrink:0}
+.cc-info{flex:1;min-width:0}
+.cc-name{font-weight:600;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cc-meta{font-size:11.5px;color:var(--text3);margin-top:2px}
+.cc-stats{display:flex;gap:12px;text-align:right;flex-shrink:0}
+.sv{font-family:'Syne',sans-serif;font-weight:600;font-size:14px}
+.sl{font-size:9px;color:var(--text3);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase}
+/* Profit */
+.pp{color:var(--green);font-weight:600}.pn{color:var(--red);font-weight:600}.pz{color:var(--text3)}
+/* Close btn */
+.xbtn{background:none;border:none;cursor:pointer;color:var(--text3);padding:4px;border-radius:6px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.xbtn:hover{background:var(--bg4);color:var(--text)}
+/* Alert */
+.alert{padding:9px 12px;border-radius:var(--radius2);font-size:12.5px;margin-bottom:12px;display:flex;align-items:flex-start;gap:7px}
+.ai{background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.2);color:var(--accent3)}
+.tag{display:inline-flex;padding:1px 7px;border-radius:4px;font-size:11px;background:var(--bg4);color:var(--text2);font-family:'DM Mono',monospace}
+/* Detail */
+.dg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.db{background:var(--bg3);border-radius:var(--radius2);padding:10px 13px}
+.dl{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px}
+.dv{font-size:13px;font-weight:500;word-break:break-all}
+/* Map */
+.map-box{width:100%;height:270px;border-radius:var(--radius2);overflow:hidden;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:12px;text-align:center}
+.map-box iframe{width:100%;height:100%;border:none}
+/* Calendar */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cal-head{text-align:center;padding:4px 0;font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:1px;text-transform:uppercase}
+.cal-day{min-height:36px;border-radius:6px;padding:4px 5px;cursor:default;position:relative}
+.cal-day.other-month{opacity:.3}
+.cal-day.today{border:1px solid var(--border2)}
+.cal-dn{font-size:11px;color:var(--text3);font-family:'DM Mono',monospace}
+.cal-event{background:rgba(200,255,0,.12);border-radius:4px;padding:1px 5px;font-size:10px;color:var(--accent);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;border-left:2px solid var(--accent)}
+.cal-event:hover{background:rgba(200,255,0,.22)}
+.cal-nav{display:flex;align-items:center;gap:10px}
+.cal-nav button{background:var(--bg3);border:1px solid var(--border2);color:var(--text2);width:28px;height:28px;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.cal-nav button:hover{color:var(--text);background:var(--bg4)}
+.cal-month{font-family:'Syne',sans-serif;font-weight:600;font-size:14px;min-width:160px;text-align:center}
+/* Venue suggestion */
+.vs{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius2);padding:9px 12px;margin-top:6px;display:none}
+.vs.show{display:block}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
+
+/* ── MOBILE / PWA ── */
+@media (max-width: 768px) {
+  .sidebar { transform: translateX(-220px); transition: transform .25s ease; }
+  .sidebar.open { transform: translateX(0); box-shadow: 4px 0 30px rgba(0,0,0,.6); }
+  .main { margin-left: 0; }
+  .topbar { padding: 14px 16px; }
+  .content { padding: 16px; }
+  .kpi-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .kpi-value { font-size: 20px; }
+  .page-title { font-size: 16px; }
+  #sec-dashboard .content > div[style*="grid-template-columns:1fr 1fr"] { display: flex; flex-direction: column; }
+  #sec-concert-detail .content > div[style*="grid-template-columns"] { display: flex; flex-direction: column; }
+  .detail-grid-cols { grid-template-columns: 1fr !important; }
+  table { font-size: 11.5px; }
+  th, td { padding: 7px 9px; }
+  .modal { width: 96vw; margin: 10px; }
+  .fg { grid-template-columns: 1fr; }
+  .fg .s2 { grid-column: span 1; }
+  .hamburger { display: flex !important; }
+  .mobile-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 99; }
+  .mobile-overlay.open { display: block; }
+}
+@media (min-width: 769px) {
+  .hamburger { display: none !important; }
+}
+/* Safe area for iPhone notch */
+.topbar { padding-top: max(18px, env(safe-area-inset-top)); }
+.sidebar { padding-top: env(safe-area-inset-top); }
+
+</style>
+</head>
+<body>
+<div class="shell">
+<aside class="sidebar">
+  <div class="logo"><div class="logo-mark">TicketVault</div><div class="logo-sub">Gestión de entradas</div></div>
+  <nav>
+    <div class="nav-section">Principal</div>
+    <div class="nav-item active" onclick="goTo('dashboard')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard
+    </div>
+    <div class="nav-section">Catálogo</div>
+    <div class="nav-item" onclick="goTo('conciertos')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>Conciertos
+    </div>
+    <div class="nav-item" onclick="goTo('entradas')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 9a1 1 0 0 1 1-1h18a1 1 0 0 1 1 1v2a2 2 0 0 0 0 4v2a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-2a2 2 0 0 0 0-4V9z"/></svg>Stock
+    </div>
+    <div class="nav-section">Finanzas</div>
+    <div class="nav-item" onclick="goTo('ventas')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Ventas
+    </div>
+    <div class="nav-item" onclick="goTo('resultados')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Resultados P&L
+    </div>
+  </nav>
+  <div class="sidebar-footer">v3.0 · <span id="sb-count">—</span> entradas</div>
+</aside>
+
+<main class="main">
+
+<div class="mobile-overlay" id="mob-overlay" onclick="closeSidebar()"></div>
+<button class="hamburger" onclick="toggleSidebar()" style="display:none;position:fixed;top:max(14px,env(safe-area-inset-top));left:14px;z-index:200;background:var(--bg2);border:1px solid var(--border2);color:var(--text2);width:36px;height:36px;border-radius:8px;cursor:pointer;align-items:center;justify-content:center;">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+
+
+<!-- DASHBOARD -->
+<section class="section active" id="sec-dashboard">
+  <div class="topbar">
+    <div><div class="page-title">Dashboard</div><div class="page-sub" id="dash-year-label">Todos los años</div></div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <div class="yr-tabs" id="dash-yr-tabs">
+        <div class="yr-tab active" onclick="setDashYear('all',this)">Todos</div>
+        <div class="yr-tab" onclick="setDashYear('2024',this)">2024</div>
+        <div class="yr-tab" onclick="setDashYear('2025',this)">2025</div>
+        <div class="yr-tab" onclick="setDashYear('2026',this)">2026</div>
+      </div>
+      <button class="btn btn-primary" onclick="openModal('modal-concert')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Nuevo concierto
+      </button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="kpi-grid" id="kpis"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px">
+      <!-- Calendario -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Calendario de conciertos</span>
+          <div class="cal-nav">
+            <button onclick="calPrev()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg></button>
+            <span class="cal-month" id="cal-month-label"></span>
+            <button onclick="calNext()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></button>
+          </div>
+        </div>
+        <div style="padding:12px">
+          <div class="cal-grid" id="cal-heads"></div>
+          <div class="cal-grid" id="cal-days" style="margin-top:4px"></div>
+        </div>
+      </div>
+      <!-- Últimas ventas -->
+      <div class="card">
+        <div class="card-header"><span class="card-title">Últimas ventas</span></div>
+        <div id="dash-ventas"></div>
+      </div>
+    </div>
+    <!-- Próximos conciertos -->
+    <div class="card">
+      <div class="card-header"><span class="card-title" id="dash-concerts-title">Próximos conciertos</span><button class="btn btn-ghost btn-sm" onclick="goTo('conciertos')">Ver todos</button></div>
+      <div id="dash-concerts" style="padding:8px 0"></div>
+    </div>
+  </div>
+</section>
+
+<!-- CONCIERTOS -->
+<section class="section" id="sec-conciertos">
+  <div class="topbar">
+    <div><div class="page-title">Conciertos</div><div class="page-sub" id="concerts-sub"></div></div>
+    <button class="btn btn-primary" onclick="openModal('modal-concert')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Nuevo concierto
+    </button>
+  </div>
+  <div class="content">
+    <div class="toolbar">
+      <div class="sw"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><input type="text" id="sc" placeholder="Buscar artista, ciudad..." oninput="renderConcerts()"></div>
+      <div class="yr-tabs" id="concert-yr-tabs">
+        <div class="yr-tab active" onclick="setConcertYear('all',this)">Todos</div>
+        <div class="yr-tab" onclick="setConcertYear('2024',this)">2024</div>
+        <div class="yr-tab" onclick="setConcertYear('2025',this)">2025</div>
+        <div class="yr-tab" onclick="setConcertYear('2026',this)">2026</div>
+      </div>
+    </div>
+    <div id="concerts-list"></div>
+  </div>
+</section>
+
+<!-- DETALLE -->
+<section class="section" id="sec-concert-detail">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:10px">
+      <button class="btn btn-ghost btn-sm" onclick="goTo('conciertos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><polyline points="15 18 9 12 15 6"/></svg>Volver</button>
+      <div><div class="page-title" id="det-title"></div><div class="page-sub" id="det-sub"></div></div>
+    </div>
+    <div style="display:flex;gap:7px">
+      <button class="btn btn-ghost btn-sm" onclick="editCurrentConcert()">Editar</button>
+      <button class="btn btn-primary" onclick="openModalAddEntrada()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="13" height="13"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Añadir entradas
+      </button>
+    </div>
+  </div>
+  <div class="content">
+    <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:18px">
+      <div>
+        <div class="dg" id="det-info" style="margin-bottom:14px"></div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Stock de entradas</span></div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Pedido</th><th>Secc.</th><th>Fila</th><th>Asiento</th><th>Web</th><th>Email</th><th>P.Compra</th><th>Estado</th><th>P.Venta</th><th>Beneficio</th><th></th></tr></thead>
+            <tbody id="det-tickets"></tbody>
+          </table></div>
+        </div>
+      </div>
+      <div>
+        <div class="card" style="margin-bottom:14px">
+          <div class="card-header"><span class="card-title">Mapa del recinto</span><button class="btn btn-ghost btn-sm" onclick="editCurrentConcert()">Editar URL</button></div>
+          <div style="padding:10px"><div class="map-box" id="det-map"></div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Resumen financiero</span></div>
+          <div id="det-finance" style="padding:14px"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STOCK -->
+<section class="section" id="sec-entradas">
+  <div class="topbar"><div><div class="page-title">Stock de entradas</div><div class="page-sub">Todas tus entradas</div></div></div>
+  <div class="content">
+    <div class="toolbar">
+      <div class="sw"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><input type="text" id="st" placeholder="Buscar..." oninput="renderTickets()"></div>
+      <select id="ft-concert" onchange="renderTickets()" style="width:170px"><option value="">Todos los conciertos</option></select>
+      <select id="ft-estado" onchange="renderTickets()" style="width:130px">
+        <option value="">Todos</option><option value="disponible">Disponible</option><option value="reservada">Reservada</option><option value="vendida">Vendida</option>
+      </select>
+      <div class="yr-tabs">
+        <div class="yr-tab active" onclick="setTicketYear('all',this)">Todos</div>
+        <div class="yr-tab" onclick="setTicketYear('2024',this)">2024</div>
+        <div class="yr-tab" onclick="setTicketYear('2025',this)">2025</div>
+        <div class="yr-tab" onclick="setTicketYear('2026',this)">2026</div>
+      </div>
+    </div>
+    <div class="card"><div class="table-wrap"><table>
+      <thead><tr><th>Concierto</th><th>Ciudad</th><th>F.Evento</th><th>Secc.</th><th>Fila</th><th>Asiento</th><th>Web compra</th><th>Pedido</th><th>Email</th><th>P.Compra</th><th>Estado</th><th>P.Venta</th><th>Tienda</th><th>Beneficio</th><th></th></tr></thead>
+      <tbody id="all-tickets"></tbody>
+    </table></div></div>
+  </div>
+</section>
+
+<!-- VENTAS -->
+<section class="section" id="sec-ventas">
+  <div class="topbar"><div><div class="page-title">Ventas</div><div class="page-sub">Historial de entradas vendidas</div></div></div>
+  <div class="content">
+    <div class="toolbar">
+      <div class="sw"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><input type="text" id="sv" placeholder="Buscar..." oninput="renderSales()"></div>
+      <div class="yr-tabs">
+        <div class="yr-tab active" onclick="setSaleYear('all',this)">Todos</div>
+        <div class="yr-tab" onclick="setSaleYear('2024',this)">2024</div>
+        <div class="yr-tab" onclick="setSaleYear('2025',this)">2025</div>
+        <div class="yr-tab" onclick="setSaleYear('2026',this)">2026</div>
+      </div>
+    </div>
+    <div class="card"><div class="table-wrap"><table>
+      <thead><tr><th>F.Venta</th><th>Concierto</th><th>Ciudad</th><th>Secc./Fila/Asiento</th><th>P.Compra</th><th>P.Venta</th><th>Tienda venta</th><th>Pedido venta</th><th>Beneficio</th><th>Margen</th></tr></thead>
+      <tbody id="sales-tbody"></tbody>
+    </table></div></div>
+  </div>
+</section>
+
+<!-- RESULTADOS -->
+<section class="section" id="sec-resultados">
+  <div class="topbar"><div><div class="page-title">Resultados P&L</div><div class="page-sub">Por concierto</div></div></div>
+  <div class="content">
+    <div class="toolbar">
+      <div class="yr-tabs">
+        <div class="yr-tab active" onclick="setResultYear('all',this)">Todos</div>
+        <div class="yr-tab" onclick="setResultYear('2024',this)">2024</div>
+        <div class="yr-tab" onclick="setResultYear('2025',this)">2025</div>
+        <div class="yr-tab" onclick="setResultYear('2026',this)">2026</div>
+      </div>
+    </div>
+    <div class="card"><div class="table-wrap"><table>
+      <thead><tr><th>Concierto</th><th>Ciudad</th><th>Fecha</th><th>Compradas</th><th>Vendidas</th><th>Disponibles</th><th>Invertido</th><th>Ingresado</th><th>Beneficio</th><th>ROI</th></tr></thead>
+      <tbody id="results-tbody"></tbody>
+    </table></div></div>
+  </div>
+</section>
+
+</main>
+</div>
+
+<!-- MODAL CONCIERTO -->
+<div class="modal-overlay" id="modal-concert">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title" id="mc-title">Nuevo concierto</span><button class="xbtn" onclick="closeModal('modal-concert')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div class="modal-body">
+      <div class="fg" style="margin-bottom:12px">
+        <div class="field s2"><label>Artista / Nombre del concierto</label><input type="text" id="c-artista" placeholder="Ej: Bad Bunny" oninput="onConcertChange()"></div>
+        <div class="field"><label>Ciudad</label><input type="text" id="c-ciudad" placeholder="Ej: Barcelona" oninput="onConcertChange()"></div>
+        <div class="field"><label>Fecha del evento</label><input type="date" id="c-fecha"></div>
+        <div id="vs-box" class="field s2 vs">
+          <label>Recinto encontrado</label>
+          <div id="vs-text" style="color:var(--accent3);font-size:12.5px;padding:4px 0"></div>
+          <div style="display:flex;gap:7px;margin-top:5px">
+            <button class="btn btn-ghost btn-sm" onclick="acceptVenue()">✓ Usar recinto</button>
+            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('vs-box').classList.remove('show')">Ignorar</button>
+          </div>
+        </div>
+        <div class="field s2"><label>Recinto / Sala</label><input type="text" id="c-recinto" placeholder="Ej: Palau Sant Jordi, Movistar Arena"></div>
+        <div class="field s2"><label>URL Mapa recinto (Google Maps embed src)</label><input type="text" id="c-mapa" placeholder="https://maps.google.com/maps?q=...&output=embed"></div>
+        <div class="field s2"><label>Notas</label><textarea id="c-notas"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-concert')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveConcert()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ENTRADAS -->
+<div class="modal-overlay" id="modal-ticket">
+  <div class="modal modal-lg">
+    <div class="modal-header"><span class="modal-title">Añadir entradas</span><button class="xbtn" onclick="closeModal('modal-ticket')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div class="modal-body">
+      <div class="fg" style="margin-bottom:14px">
+        <div class="field s2" style="background:var(--bg3);border-radius:var(--radius2);padding:8px 12px;font-size:11.5px;color:var(--text3)">Datos de compra — aplican a todas las entradas del lote</div>
+        <div class="field"><label>Web de compra</label><input type="text" id="t-web" placeholder="Ticketmaster, Viagogo..."></div>
+        <div class="field"><label>Nº pedido compra</label><input type="text" id="t-pedido"></div>
+        <div class="field"><label>Email cuenta</label><input type="email" id="t-email" placeholder="tu@email.com"></div>
+        <div class="field"><label>Fecha compra</label><input type="date" id="t-fcompra"></div>
+        <div style="height:1px;background:var(--border);grid-column:span 2;margin:2px 0"></div>
+        <div class="field"><label>Sección / Zona</label><input type="text" id="t-sec" placeholder="Ej: Gold Circle, Pista"></div>
+        <div class="field"><label>Fila</label><input type="text" id="t-fila" placeholder="Ej: A, 12"></div>
+        <div class="field"><label>Precio compra (€) TOTAL</label><input type="number" id="t-precio" placeholder="0.00" step="0.01" min="0"></div>
+        <div class="field"><label>Cantidad</label><input type="number" id="t-qty" value="1" min="1" max="50" oninput="genLote()"></div>
+      </div>
+      <div id="lote-rows"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-ticket')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveTickets()">Añadir entradas</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL VENTA -->
+<div class="modal-overlay" id="modal-venta">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title">Registrar venta</span><button class="xbtn" onclick="closeModal('modal-venta')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div class="modal-body">
+      <input type="hidden" id="v-id">
+      <div id="v-info" style="margin-bottom:14px"></div>
+      <div class="fg">
+        <div class="field"><label>Precio de venta (€)</label><input type="number" id="v-precio" placeholder="0.00" step="0.01" min="0" oninput="calcProfit()"></div>
+        <div class="field"><label>Fecha de venta</label><input type="date" id="v-fecha"></div>
+        <div class="field"><label>Sitio de venta</label><input type="text" id="v-tienda" placeholder="Viagogo, Stubhub..."></div>
+        <div class="field"><label>Nº pedido venta</label><input type="text" id="v-pedido"></div>
+        <div class="field s2"><label>Beneficio estimado</label><div id="v-profit" style="padding:6px 0;font-size:15px;font-weight:600;color:var(--text3)">—</div></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-venta')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveVenta()">Confirmar venta</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════
+const DB={get:k=>JSON.parse(localStorage.getItem('tv3_'+k)||'[]'),set:(k,v)=>localStorage.setItem('tv3_'+k,JSON.stringify(v)),id:()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6)};
+const gc=()=>DB.get('concerts'), gt=()=>DB.get('tickets');
+const sc=d=>DB.set('concerts',d), st=d=>DB.set('tickets',d);
+
+const IMPORT_DATA={"concerts":[{"id":"c_3re05b4j","artista":"Adele","fecha":"2024-08-09","recinto":"","ciudad":"","mapa":"","notas":""},{"id":"c_zcker7u1","artista":"Adele","fecha":"2024-08-24","recinto":"","ciudad":"","mapa":"","notas":""},{"id":"c_suqwa62t","artista":"Adele","fecha":"2024-08-31","recinto":"","ciudad":"","mapa":"","notas":""},{"id":"c_rwekmfs3","artista":"Coldplay","fecha":"2025-01-09","recinto":"","ciudad":"","mapa":"","notas":""},{"id":"c_u0pi5cvu","artista":"Coldplay","fecha":"2025-01-09","recinto":"","ciudad":"AE","mapa":"","notas":""},{"id":"c_w3k0oevk","artista":"Oasis","fecha":"2025-08-03","recinto":"","ciudad":"UK","mapa":"","notas":""},{"id":"c_ly94wo1p","artista":"Oasis","fecha":"2025-09-13","recinto":"","ciudad":"Mexico","mapa":"","notas":""},{"id":"c_a5jlaijo","artista":"Coldplay","fecha":"2025-07-26","recinto":"","ciudad":"Miami","mapa":"","notas":""},{"id":"c_0h1vorjv","artista":"Coldplay","fecha":"2025-06-07","recinto":"","ciudad":"Las Vegas","mapa":"","notas":""},{"id":"c_f25kbiwe","artista":"Bad Bunny","fecha":"2025-12-15","recinto":"","ciudad":"Ciudad de mexico","mapa":"","notas":""},{"id":"c_iwnn4mp4","artista":"Bad Bunny","fecha":"2025-12-16","recinto":"","ciudad":"Ciudad de mexico","mapa":"","notas":""},{"id":"c_v9l7rx6f","artista":"Bad Bunny","fecha":"2025-12-12","recinto":"","ciudad":"Ciudad de mexico","mapa":"","notas":""},{"id":"c_ppkncl2i","artista":"Bad Bunny","fecha":"2025-12-19","recinto":"","ciudad":"Ciudad de mexico","mapa":"","notas":""},{"id":"c_0hls128o","artista":"Bad Bunny","fecha":"2025-12-21","recinto":"","ciudad":"Ciudad de mexico","mapa":"","notas":""},{"id":"c_j6kr9b2v","artista":"Bad bunny","fecha":"2025-12-20","recinto":"","ciudad":"Ciudad de México","mapa":"","notas":""},{"id":"c_swcldf91","artista":"Bad Bunny","fecha":"2026-05-23","recinto":"","ciudad":"Barcelona","mapa":"","notas":""},{"id":"c_7ksb2vf9","artista":"Bad Bunny","fecha":"2026-06-10","recinto":"","ciudad":"Madrid","mapa":"","notas":""},{"id":"c_i0xz6qap","artista":"Bad Bunny","fecha":"2026-06-11","recinto":"","ciudad":"Madrid","mapa":"","notas":""},{"id":"c_5wf22gd0","artista":"Bad Bunny","fecha":"2026-06-03","recinto":"","ciudad":"Madrid","mapa":"","notas":""},{"id":"c_9uyiesxu","artista":"Bad Bunny","fecha":"2026-06-02","recinto":"","ciudad":"Madrid","mapa":"","notas":""},{"id":"c_ldoqbqkp","artista":"Bad Bunny","fecha":"2026-06-07","recinto":"","ciudad":"Madrid","mapa":"","notas":""},{"id":"c_4l8e8o9f","artista":"Bad Bunny","fecha":"2026-05-30","recinto":"","ciudad":"Madrid","mapa":"","notas":""},{"id":"c_3a8x1qlc","artista":"Bad Bunny","fecha":"2026-05-31","recinto":"","ciudad":"Madrid","mapa":"","notas":""},{"id":"c_cfln9wmu","artista":"BTS","fecha":"2026-08-05","recinto":"","ciudad":"Massachusetts","mapa":"","notas":""},{"id":"c_p4b0zy1a","artista":"BTS","fecha":"2026-04-28","recinto":"","ciudad":"TAMPA","mapa":"","notas":""},{"id":"c_nov2nvkn","artista":"BTS","fecha":"2026-05-03","recinto":"","ciudad":"PASO","mapa":"","notas":""},{"id":"c_u7s2uhdh","artista":"Rosalia","fecha":"2026-04-01","recinto":"","ciudad":"Madrid","mapa":"","notas":""},{"id":"c_3hapnro2","artista":"Rosalia","fecha":"2026-04-15","recinto":"","ciudad":"Barcelona","mapa":"","notas":""},{"id":"c_uq6r5hu0","artista":"Rosalia","fecha":"2026-04-13","recinto":"","ciudad":"Barcelona","mapa":"","notas":""},{"id":"c_mjh4nij2","artista":"Rosalia","fecha":"2026-03-30","recinto":"","ciudad":"Madrid","mapa":"","notas":""},{"id":"c_rg7v8cfc","artista":"Rosalia","fecha":"2026-04-17","recinto":"","ciudad":"Barcelona","mapa":"","notas":""},{"id":"c_l7hi4jgk","artista":"Rosalia","fecha":"2026-04-04","recinto":"","ciudad":"Madrid","mapa":"","notas":""},{"id":"c_v7i4ecfu","artista":"Rosalia","fecha":"2026-04-03","recinto":"","ciudad":"Madrid","mapa":"","notas":""},{"id":"c_aqzoc6h3","artista":"Harry Stilos","fecha":"2026-03-30","recinto":"","ciudad":"Estadio Johan Cruijff NL","mapa":"","notas":""},{"id":"c_dm2658kr","artista":"Ariana Grande","fecha":"2026-08-27","recinto":"","ciudad":"London","mapa":"","notas":""},{"id":"c_riq6ml2e","artista":"Ariana Grande","fecha":"2026-08-23","recinto":"","ciudad":"London","mapa":"","notas":""},{"id":"c_91jf8dc3","artista":"Ariana Grande","fecha":"2026-08-20","recinto":"","ciudad":"London","mapa":"","notas":""}],"tickets":[{"id":"t_n62knmms","concertId":"c_3re05b4j","lote":"27188374","seccion":"D9","fila":"24","asiento":"7","precioCompra":119.9,"estado":"vendida","precioVenta":219.75,"fechaVenta":"2024-02-07","webCompra":"Ticketmaster","numeroPedidoCompra":"27188374","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"Viagogo","fechaCompra":"2024-02-07","numeroPedidoVenta":""},{"id":"t_qkrd9cl3","concertId":"c_3re05b4j","lote":"27188374","seccion":"D9","fila":"24","asiento":"8","precioCompra":119.9,"estado":"vendida","precioVenta":219.75,"fechaVenta":"2024-02-07","webCompra":"Ticketmaster","numeroPedidoCompra":"27188374","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"Viagogo","fechaCompra":"2024-02-07","numeroPedidoVenta":""},{"id":"t_ewjaiuxh","concertId":"c_zcker7u1","lote":"27248372","seccion":"D3","fila":"23","asiento":"4","precioCompra":119.9,"estado":"vendida","precioVenta":153.82,"fechaVenta":"2024-08-16","webCompra":"Ticketmaster","numeroPedidoCompra":"27248372","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"Viagogo","fechaCompra":"2024-02-07","numeroPedidoVenta":""},{"id":"t_rng6qohg","concertId":"c_zcker7u1","lote":"27248372","seccion":"D3","fila":"23","asiento":"5","precioCompra":119.9,"estado":"vendida","precioVenta":153.82,"fechaVenta":"2024-08-16","webCompra":"Ticketmaster","numeroPedidoCompra":"27248372","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"Viagogo","fechaCompra":"2024-02-07","numeroPedidoVenta":""},{"id":"t_ouuen4jl","concertId":"c_zcker7u1","lote":"27247896","seccion":"D12","fila":"25","asiento":"5","precioCompra":119.9,"estado":"vendida","precioVenta":105.48,"fechaVenta":"2024-08-03","webCompra":"Ticketmaster","numeroPedidoCompra":"27247896","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"Viagogo","fechaCompra":"2024-02-07","numeroPedidoVenta":""},{"id":"t_1n7zwqo9","concertId":"c_zcker7u1","lote":"27247896","seccion":"D12","fila":"25","asiento":"6","precioCompra":119.9,"estado":"vendida","precioVenta":105.48,"fechaVenta":"2024-08-03","webCompra":"Ticketmaster","numeroPedidoCompra":"27247896","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"Viagogo","fechaCompra":"2024-02-07","numeroPedidoVenta":""},{"id":"t_hwf80jqa","concertId":"c_suqwa62t","lote":"27303006","seccion":"D10","fila":"24","asiento":"19","precioCompra":119.9,"estado":"vendida","precioVenta":175.5,"fechaVenta":"2024-08-06","webCompra":"Ticketmaster","numeroPedidoCompra":"27303006","emailCuenta":"snkrsflai@gmail.com","tiendaVenta":"Viagogo","fechaCompra":"2024-02-07","numeroPedidoVenta":""},{"id":"t_7fg568xh","concertId":"c_suqwa62t","lote":"27303006","seccion":"D10","fila":"24","asiento":"20","precioCompra":119.9,"estado":"vendida","precioVenta":175.5,"fechaVenta":"2024-08-06","webCompra":"Ticketmaster","numeroPedidoCompra":"27303006","emailCuenta":"snkrsflai@gmail.com","tiendaVenta":"Viagogo","fechaCompra":"2024-02-07","numeroPedidoVenta":""},{"id":"t_02hio7y8","concertId":"c_suqwa62t","lote":"27303678","seccion":"D20","fila":"28","asiento":"24","precioCompra":99.9,"estado":"vendida","precioVenta":113.39,"fechaVenta":"2024-08-03","webCompra":"Ticketmaster","numeroPedidoCompra":"27303678","emailCuenta":"snkrsflai@gmail.com","tiendaVenta":"Viagogo","fechaCompra":"2024-02-07","numeroPedidoVenta":""},{"id":"t_pdnh712k","concertId":"c_suqwa62t","lote":"27303678","seccion":"D20","fila":"28","asiento":"25","precioCompra":99.9,"estado":"vendida","precioVenta":113.39,"fechaVenta":"2024-08-03","webCompra":"Ticketmaster","numeroPedidoCompra":"27303678","emailCuenta":"snkrsflai@gmail.com","tiendaVenta":"Viagogo","fechaCompra":"2024-02-07","numeroPedidoVenta":""},{"id":"t_z72zr3mj","concertId":"c_rwekmfs3","lote":"1580271","seccion":"23.0","fila":"S","asiento":"1","precioCompra":133.5,"estado":"vendida","precioVenta":457.98,"fechaVenta":"2024-09-27","webCompra":"Ticketmaster","numeroPedidoCompra":"1580271","emailCuenta":"roger.arcarons@gmail.com","tiendaVenta":"Stubhub","fechaCompra":"2024-02-07","numeroPedidoVenta":""},{"id":"t_s85q70qa","concertId":"c_rwekmfs3","lote":"1580271","seccion":"23.0","fila":"S","asiento":"2","precioCompra":133.5,"estado":"vendida","precioVenta":457.98,"fechaVenta":"2024-09-27","webCompra":"Ticketmaster","numeroPedidoCompra":"1580271","emailCuenta":"roger.arcarons@gmail.com","tiendaVenta":"Stubhub","fechaCompra":"2024-02-07","numeroPedidoVenta":""},{"id":"t_dnstgrnl","concertId":"c_u0pi5cvu","lote":"1580271","seccion":"23","fila":"S","asiento":"1","precioCompra":133.5,"estado":"vendida","precioVenta":457.98,"fechaVenta":"2024-09-27","webCompra":"Ticketmaster","numeroPedidoCompra":"1580271","emailCuenta":"roger.arcarons@gmail.com","tiendaVenta":"Stubhub","fechaCompra":"2024-09-27","numeroPedidoVenta":""},{"id":"t_ezav1ycy","concertId":"c_u0pi5cvu","lote":"1580271","seccion":"23","fila":"S","asiento":"2","precioCompra":133.5,"estado":"vendida","precioVenta":457.98,"fechaVenta":"2024-09-27","webCompra":"Ticketmaster","numeroPedidoCompra":"1580271","emailCuenta":"roger.arcarons@gmail.com","tiendaVenta":"Stubhub","fechaCompra":"2024-09-27","numeroPedidoVenta":""},{"id":"t_c7d32ro2","concertId":"c_w3k0oevk","lote":"108725538","seccion":"502","fila":"16","asiento":"48","precioCompra":202.83,"estado":"vendida","precioVenta":395.5,"fechaVenta":"","webCompra":"https://www.gigsandtours.com/user/orders","numeroPedidoCompra":"108725538","emailCuenta":"rogerflaips4@gmail.com","tiendaVenta":"","fechaCompra":"","numeroPedidoVenta":""},{"id":"t_1r3ohzn0","concertId":"c_w3k0oevk","lote":"108725538","seccion":"502","fila":"16","asiento":"49","precioCompra":202.83,"estado":"vendida","precioVenta":395.5,"fechaVenta":"","webCompra":"https://www.gigsandtours.com/user/orders","numeroPedidoCompra":"108725538","emailCuenta":"rogerflaips4@gmail.com","tiendaVenta":"","fechaCompra":"","numeroPedidoVenta":""},{"id":"t_s5rzm3br","concertId":"c_w3k0oevk","lote":"108725918","seccion":"Pitch","fila":"","asiento":"1","precioCompra":231.29,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"https://www.gigsandtours.com/user/orders","numeroPedidoCompra":"108725918","emailCuenta":"rogerflaips4@gmail.com","tiendaVenta":"","fechaCompra":"2024-08-31","numeroPedidoVenta":""},{"id":"t_ns0v0xxo","concertId":"c_w3k0oevk","lote":"108725918","seccion":"Pitch","fila":"","asiento":"2","precioCompra":231.29,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"https://www.gigsandtours.com/user/orders","numeroPedidoCompra":"108725918","emailCuenta":"rogerflaips4@gmail.com","tiendaVenta":"","fechaCompra":"2024-08-31","numeroPedidoVenta":""},{"id":"t_hmb1n9q2","concertId":"c_ly94wo1p","lote":"108725918","seccion":"NA-27","fila":"10","asiento":"8","precioCompra":63.45,"estado":"vendida","precioVenta":105.48,"fechaVenta":"","webCompra":"Ticketmaster.com mx","numeroPedidoCompra":"108725918","emailCuenta":"snkrsflai@gmail.com","tiendaVenta":"","fechaCompra":"2024-10-08","numeroPedidoVenta":""},{"id":"t_90h1pbzq","concertId":"c_ly94wo1p","lote":"108725918","seccion":"NA-27","fila":"10","asiento":"9","precioCompra":63.45,"estado":"vendida","precioVenta":105.48,"fechaVenta":"","webCompra":"Ticketmaster.com mx","numeroPedidoCompra":"108725918","emailCuenta":"snkrsflai@gmail.com","tiendaVenta":"","fechaCompra":"2024-10-08","numeroPedidoVenta":""},{"id":"t_tmtuvrqf","concertId":"c_ly94wo1p","lote":"108725918","seccion":"NA-27","fila":"10","asiento":"10","precioCompra":63.45,"estado":"vendida","precioVenta":105.48,"fechaVenta":"","webCompra":"Ticketmaster.com mx","numeroPedidoCompra":"108725918","emailCuenta":"snkrsflai@gmail.com","tiendaVenta":"","fechaCompra":"2024-10-08","numeroPedidoVenta":""},{"id":"t_q9vcitgo","concertId":"c_ly94wo1p","lote":"108725918","seccion":"NA-27","fila":"10","asiento":"11","precioCompra":63.45,"estado":"vendida","precioVenta":105.48,"fechaVenta":"","webCompra":"Ticketmaster.com mx","numeroPedidoCompra":"108725918","emailCuenta":"snkrsflai@gmail.com","tiendaVenta":"","fechaCompra":"2024-10-08","numeroPedidoVenta":""},{"id":"t_cugdvy8a","concertId":"c_a5jlaijo","lote":"45-27973/FLO","seccion":"344","fila":"25","asiento":"9","precioCompra":69.05,"estado":"vendida","precioVenta":301.06,"fechaVenta":"","webCompra":"ticketmaster.com","numeroPedidoCompra":"45-27973/FLO","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"","fechaCompra":"2024-10-11","numeroPedidoVenta":""},{"id":"t_6uv2ig4c","concertId":"c_a5jlaijo","lote":"45-27973/FLO","seccion":"344","fila":"25","asiento":"19","precioCompra":69.05,"estado":"vendida","precioVenta":301.06,"fechaVenta":"","webCompra":"ticketmaster.com","numeroPedidoCompra":"45-27973/FLO","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"","fechaCompra":"2024-10-11","numeroPedidoVenta":""},{"id":"t_55qt5d49","concertId":"c_a5jlaijo","lote":"45-27973/FLO","seccion":"344","fila":"25","asiento":"11","precioCompra":69.05,"estado":"vendida","precioVenta":301.06,"fechaVenta":"","webCompra":"ticketmaster.com","numeroPedidoCompra":"45-27973/FLO","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"","fechaCompra":"2024-10-11","numeroPedidoVenta":""},{"id":"t_jy5qyub6","concertId":"c_a5jlaijo","lote":"45-27973/FLO","seccion":"344","fila":"25","asiento":"12","precioCompra":69.05,"estado":"vendida","precioVenta":301.06,"fechaVenta":"","webCompra":"ticketmaster.com","numeroPedidoCompra":"45-27973/FLO","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"","fechaCompra":"2024-10-11","numeroPedidoVenta":""},{"id":"t_1xjdueik","concertId":"c_0h1vorjv","lote":"11-22274/NEV","seccion":"441","fila":"9","asiento":"3","precioCompra":74.82,"estado":"vendida","precioVenta":206.56,"fechaVenta":"","webCompra":"ticketmaster.com","numeroPedidoCompra":"11-22274/NEV","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"","fechaCompra":"2024-10-11","numeroPedidoVenta":""},{"id":"t_wv7iz2by","concertId":"c_0h1vorjv","lote":"11-22274/NEV","seccion":"441","fila":"9","asiento":"4","precioCompra":74.82,"estado":"vendida","precioVenta":206.56,"fechaVenta":"","webCompra":"ticketmaster.com","numeroPedidoCompra":"11-22274/NEV","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"","fechaCompra":"2024-10-11","numeroPedidoVenta":""},{"id":"t_6vt41etv","concertId":"c_0h1vorjv","lote":"11-22274/NEV","seccion":"441","fila":"9","asiento":"5","precioCompra":74.82,"estado":"vendida","precioVenta":206.56,"fechaVenta":"","webCompra":"ticketmaster.com","numeroPedidoCompra":"11-22274/NEV","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"","fechaCompra":"2024-10-11","numeroPedidoVenta":""},{"id":"t_r2h2muqy","concertId":"c_0h1vorjv","lote":"11-22274/NEV","seccion":"441","fila":"9","asiento":"6","precioCompra":74.82,"estado":"vendida","precioVenta":206.56,"fechaVenta":"","webCompra":"ticketmaster.com","numeroPedidoCompra":"11-22274/NEV","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"","fechaCompra":"2024-10-11","numeroPedidoVenta":""},{"id":"t_ys9yyux7","concertId":"c_f25kbiwe","lote":"34-19114/MXC","seccion":"NA-25\n","fila":"21","asiento":"7","precioCompra":51.28,"estado":"vendida","precioVenta":285.6,"fechaVenta":"","webCompra":"Ticketmaster.mx","numeroPedidoCompra":"34-19114/MXC","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"","fechaCompra":"2025-05-13","numeroPedidoVenta":""},{"id":"t_kq3tijhl","concertId":"c_f25kbiwe","lote":"34-19114/MXC","seccion":"NA-25\n","fila":"21","asiento":"8","precioCompra":51.28,"estado":"vendida","precioVenta":285.6,"fechaVenta":"","webCompra":"Ticketmaster.mx","numeroPedidoCompra":"34-19114/MXC","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"","fechaCompra":"2025-05-13","numeroPedidoVenta":""},{"id":"t_3024yveg","concertId":"c_f25kbiwe","lote":"34-19114/MXC","seccion":"NA-25\n","fila":"21","asiento":"9","precioCompra":51.28,"estado":"vendida","precioVenta":285.6,"fechaVenta":"","webCompra":"Ticketmaster.mx","numeroPedidoCompra":"34-19114/MXC","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"","fechaCompra":"2025-05-13","numeroPedidoVenta":""},{"id":"t_mcdoe43j","concertId":"c_f25kbiwe","lote":"34-19114/MXC","seccion":"NA-25\n","fila":"21","asiento":"10","precioCompra":51.28,"estado":"vendida","precioVenta":285.6,"fechaVenta":"","webCompra":"Ticketmaster.mx","numeroPedidoCompra":"34-19114/MXC","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"","fechaCompra":"2025-05-13","numeroPedidoVenta":""},{"id":"t_251n0nn0","concertId":"c_iwnn4mp4","lote":"74-39704/MXC","seccion":"NA-17","fila":"21","asiento":"2025-12-11 00:00:00","precioCompra":51.26,"estado":"vendida","precioVenta":373.58,"fechaVenta":"","webCompra":"Ticketmaster.mx","numeroPedidoCompra":"74-39704/MXC","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"","fechaCompra":"2025-05-13","numeroPedidoVenta":""},{"id":"t_ad37k0os","concertId":"c_iwnn4mp4","lote":"74-39704/MXC","seccion":"NA-17","fila":"21","asiento":"2","precioCompra":51.26,"estado":"vendida","precioVenta":373.58,"fechaVenta":"","webCompra":"Ticketmaster.mx","numeroPedidoCompra":"74-39704/MXC","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"","fechaCompra":"2025-05-13","numeroPedidoVenta":""},{"id":"t_w37dbo39","concertId":"c_iwnn4mp4","lote":"74-39704/MXC","seccion":"NA-17","fila":"23","asiento":"15","precioCompra":51.26,"estado":"vendida","precioVenta":175.5,"fechaVenta":"","webCompra":"Ticketmaster.mx","numeroPedidoCompra":"74-39704/MXC","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"","fechaCompra":"2025-05-13","numeroPedidoVenta":""},{"id":"t_1j7gxwdx","concertId":"c_iwnn4mp4","lote":"74-39704/MXC","seccion":"NA-17","fila":"23","asiento":"16","precioCompra":51.26,"estado":"vendida","precioVenta":175.5,"fechaVenta":"","webCompra":"Ticketmaster.mx","numeroPedidoCompra":"74-39704/MXC","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"","fechaCompra":"2025-05-13","numeroPedidoVenta":""},{"id":"t_lklqio6s","concertId":"c_v9l7rx6f","lote":"34-37655/MXC","seccion":"NA-30","fila":"31","asiento":"2025-10-09 00:00:00","precioCompra":51.8,"estado":"vendida","precioVenta":175.8,"fechaVenta":"","webCompra":"Ticketmaster.mx","numeroPedidoCompra":"34-37655/MXC","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"","fechaCompra":"2025-05-13","numeroPedidoVenta":""},{"id":"t_on3x22fa","concertId":"c_v9l7rx6f","lote":"34-37655/MXC","seccion":"NA-30","fila":"31","asiento":"2","precioCompra":51.8,"estado":"vendida","precioVenta":175.8,"fechaVenta":"","webCompra":"Ticketmaster.mx","numeroPedidoCompra":"34-37655/MXC","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"","fechaCompra":"2025-05-13","numeroPedidoVenta":""},{"id":"t_bnixygn7","concertId":"c_ppkncl2i","lote":"75-27335/MXC","seccion":"NA-26","fila":"30","asiento":"21","precioCompra":51.8,"estado":"vendida","precioVenta":149.43,"fechaVenta":"","webCompra":"Ticketmaster.mx","numeroPedidoCompra":"75-27335/MXC","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"","fechaCompra":"2025-05-13","numeroPedidoVenta":""},{"id":"t_d83ecya5","concertId":"c_ppkncl2i","lote":"75-27335/MXC","seccion":"NA-26","fila":"30","asiento":"22","precioCompra":51.8,"estado":"vendida","precioVenta":149.43,"fechaVenta":"","webCompra":"Ticketmaster.mx","numeroPedidoCompra":"75-27335/MXC","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"","fechaCompra":"2025-05-13","numeroPedidoVenta":""},{"id":"t_tujjiwok","concertId":"c_0hls128o","lote":"85-11354/MXC","seccion":"General B","fila":"","asiento":"1","precioCompra":93.94,"estado":"vendida","precioVenta":162.62,"fechaVenta":"","webCompra":"Ticketmaster.mx","numeroPedidoCompra":"85-11354/MXC","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"","fechaCompra":"2025-05-14","numeroPedidoVenta":""},{"id":"t_5hbwyckj","concertId":"c_0hls128o","lote":"85-11354/MXC","seccion":"General B","fila":"","asiento":"2","precioCompra":93.94,"estado":"vendida","precioVenta":162.62,"fechaVenta":"","webCompra":"Ticketmaster.mx","numeroPedidoCompra":"85-11354/MXC","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"","fechaCompra":"2025-05-14","numeroPedidoVenta":""},{"id":"t_x3solx8i","concertId":"c_0hls128o","lote":"85-11354/MXC","seccion":"General B","fila":"","asiento":"3","precioCompra":93.94,"estado":"vendida","precioVenta":162.62,"fechaVenta":"","webCompra":"Ticketmaster.mx","numeroPedidoCompra":"85-11354/MXC","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"","fechaCompra":"2025-05-14","numeroPedidoVenta":""},{"id":"t_0h0yo1a2","concertId":"c_0hls128o","lote":"85-11354/MXC","seccion":"General B","fila":"","asiento":"4","precioCompra":93.94,"estado":"vendida","precioVenta":162.62,"fechaVenta":"","webCompra":"Ticketmaster.mx","numeroPedidoCompra":"85-11354/MXC","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"","fechaCompra":"2025-05-14","numeroPedidoVenta":""},{"id":"t_xxm75uft","concertId":"c_j6kr9b2v","lote":"","seccion":"General A","fila":"","asiento":"1","precioCompra":230.75,"estado":"vendida","precioVenta":326.99,"fechaVenta":"","webCompra":"","numeroPedidoCompra":"","emailCuenta":"","tiendaVenta":"","fechaCompra":"2025-12-01","numeroPedidoVenta":""},{"id":"t_vr6ptsrw","concertId":"c_j6kr9b2v","lote":"","seccion":"General A","fila":"","asiento":"2","precioCompra":230.75,"estado":"vendida","precioVenta":326.99,"fechaVenta":"","webCompra":"","numeroPedidoCompra":"","emailCuenta":"","tiendaVenta":"","fechaCompra":"2025-12-01","numeroPedidoVenta":""},{"id":"t_vat1swey","concertId":"c_swcldf91","lote":"8837843","seccion":"Gold Circle","fila":"","asiento":"1","precioCompra":162.55,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster","numeroPedidoCompra":"8837843","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"","fechaCompra":"2025-05-08","numeroPedidoVenta":""},{"id":"t_du3ds4h2","concertId":"c_swcldf91","lote":"8837843","seccion":"Gold Circle","fila":"","asiento":"2","precioCompra":162.55,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster","numeroPedidoCompra":"8837843","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"","fechaCompra":"2025-05-08","numeroPedidoVenta":""},{"id":"t_xm4dqrcb","concertId":"c_swcldf91","lote":"8837843","seccion":"Gold Circle","fila":"","asiento":"3","precioCompra":162.55,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster","numeroPedidoCompra":"8837843","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"","fechaCompra":"2025-05-08","numeroPedidoVenta":""},{"id":"t_6ifjjys7","concertId":"c_swcldf91","lote":"8837843","seccion":"Gold Circle","fila":"","asiento":"4","precioCompra":162.55,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster","numeroPedidoCompra":"8837843","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"","fechaCompra":"2025-05-08","numeroPedidoVenta":""},{"id":"t_de9psuvc","concertId":"c_swcldf91","lote":"8837843","seccion":"Gold Circle","fila":"","asiento":"5","precioCompra":162.55,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster","numeroPedidoCompra":"8837843","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"","fechaCompra":"2025-05-08","numeroPedidoVenta":""},{"id":"t_q4iqg7b0","concertId":"c_swcldf91","lote":"8837843","seccion":"Gold Circle","fila":"","asiento":"6","precioCompra":162.55,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster","numeroPedidoCompra":"8837843","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"","fechaCompra":"2025-05-08","numeroPedidoVenta":""},{"id":"t_lujpaiwi","concertId":"c_swcldf91","lote":"8837843","seccion":"Gold Circle","fila":"","asiento":"7","precioCompra":162.55,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster","numeroPedidoCompra":"8837843","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"","fechaCompra":"2025-05-08","numeroPedidoVenta":""},{"id":"t_kem3e742","concertId":"c_swcldf91","lote":"8837843","seccion":"Gold Circle","fila":"","asiento":"8","precioCompra":162.55,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster","numeroPedidoCompra":"8837843","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"","fechaCompra":"2025-05-08","numeroPedidoVenta":""},{"id":"t_7f4pdqzn","concertId":"c_7ksb2vf9","lote":"8926825","seccion":"Gold Circle","fila":"","asiento":"1","precioCompra":162.8,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster","numeroPedidoCompra":"8926825","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"","fechaCompra":"2025-05-08","numeroPedidoVenta":""},{"id":"t_db166p8k","concertId":"c_7ksb2vf9","lote":"8926825","seccion":"Gold Circle","fila":"","asiento":"2","precioCompra":162.8,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster","numeroPedidoCompra":"8926825","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"","fechaCompra":"2025-05-08","numeroPedidoVenta":""},{"id":"t_t8f7l4rc","concertId":"c_7ksb2vf9","lote":"8926825","seccion":"Gold Circle","fila":"","asiento":"3","precioCompra":162.8,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster","numeroPedidoCompra":"8926825","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"","fechaCompra":"2025-05-08","numeroPedidoVenta":""},{"id":"t_x14cl41v","concertId":"c_7ksb2vf9","lote":"8926825","seccion":"Gold Circle","fila":"","asiento":"4","precioCompra":162.8,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster","numeroPedidoCompra":"8926825","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"","fechaCompra":"2025-05-08","numeroPedidoVenta":""},{"id":"t_ajzooyk6","concertId":"c_i0xz6qap","lote":"8936701","seccion":"511","fila":"4","asiento":"3","precioCompra":83.63,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster","numeroPedidoCompra":"8936701","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"","fechaCompra":"2025-05-08","numeroPedidoVenta":""},{"id":"t_sqi77io4","concertId":"c_i0xz6qap","lote":"8936701","seccion":"511","fila":"4","asiento":"4","precioCompra":83.63,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster","numeroPedidoCompra":"8936701","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"","fechaCompra":"2025-05-08","numeroPedidoVenta":""},{"id":"t_ykt9oyqo","concertId":"c_i0xz6qap","lote":"8936701","seccion":"511","fila":"4","asiento":"5","precioCompra":83.63,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster","numeroPedidoCompra":"8936701","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"","fechaCompra":"2025-05-08","numeroPedidoVenta":""},{"id":"t_kztzte7u","concertId":"c_i0xz6qap","lote":"8936701","seccion":"511","fila":"4","asiento":"6","precioCompra":83.63,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster","numeroPedidoCompra":"8936701","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"","fechaCompra":"2025-05-08","numeroPedidoVenta":""},{"id":"t_jw22brgw","concertId":"c_i0xz6qap","lote":"8936701","seccion":"511","fila":"4","asiento":"7","precioCompra":83.63,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster","numeroPedidoCompra":"8936701","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"","fechaCompra":"2025-05-08","numeroPedidoVenta":""},{"id":"t_28vadyy4","concertId":"c_i0xz6qap","lote":"8936701","seccion":"511","fila":"4","asiento":"8","precioCompra":83.63,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster","numeroPedidoCompra":"8936701","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"","fechaCompra":"2025-05-08","numeroPedidoVenta":""},{"id":"t_974g7pbr","concertId":"c_5wf22gd0","lote":"8911919","seccion":"508","fila":"13","asiento":"3","precioCompra":94.63,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster","numeroPedidoCompra":"8911919","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"","fechaCompra":"2025-05-08","numeroPedidoVenta":""},{"id":"t_gzhaucgy","concertId":"c_5wf22gd0","lote":"8911919","seccion":"508","fila":"13","asiento":"4","precioCompra":94.63,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster","numeroPedidoCompra":"8911919","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"","fechaCompra":"2025-05-08","numeroPedidoVenta":""},{"id":"t_pjdbebic","concertId":"c_5wf22gd0","lote":"8911919","seccion":"508","fila":"13","asiento":"5","precioCompra":94.63,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster","numeroPedidoCompra":"8911919","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"","fechaCompra":"2025-05-08","numeroPedidoVenta":""},{"id":"t_mqyabu8y","concertId":"c_5wf22gd0","lote":"8911919","seccion":"508","fila":"13","asiento":"6","precioCompra":94.63,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster","numeroPedidoCompra":"8911919","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"","fechaCompra":"2025-05-08","numeroPedidoVenta":""},{"id":"t_du7h9mcv","concertId":"c_5wf22gd0","lote":"8911919","seccion":"508","fila":"13","asiento":"7","precioCompra":94.63,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster","numeroPedidoCompra":"8911919","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"","fechaCompra":"2025-05-08","numeroPedidoVenta":""},{"id":"t_n8xgsqf7","concertId":"c_5wf22gd0","lote":"8911919","seccion":"508","fila":"13","asiento":"8","precioCompra":94.63,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster","numeroPedidoCompra":"8911919","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"","fechaCompra":"2025-05-08","numeroPedidoVenta":""},{"id":"t_it68g0qi","concertId":"c_i0xz6qap","lote":"10510645","seccion":"327 visibilidad lateral","fila":"8","asiento":"27","precioCompra":115.8,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster","numeroPedidoCompra":"10510645","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"","fechaCompra":"2026-02-09","numeroPedidoVenta":""},{"id":"t_1y8gk075","concertId":"c_i0xz6qap","lote":"10510645","seccion":"327 visibilidad lateral","fila":"8","asiento":"28","precioCompra":115.8,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster","numeroPedidoCompra":"10510645","emailCuenta":"rogerarcarons@gmail.com","tiendaVenta":"","fechaCompra":"2026-02-09","numeroPedidoVenta":""},{"id":"t_1d1nbkw9","concertId":"c_9uyiesxu","lote":"10507385","seccion":"428 visibilidad reducida","fila":"12","asiento":"1","precioCompra":94.3,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster","numeroPedidoCompra":"10507385","emailCuenta":"flaiarca@gmail.com","tiendaVenta":"","fechaCompra":"2026-02-09","numeroPedidoVenta":""},{"id":"t_2sjcozh2","concertId":"c_9uyiesxu","lote":"10507385","seccion":"428 visibilidad reducida","fila":"12","asiento":"2","precioCompra":94.3,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster","numeroPedidoCompra":"10507385","emailCuenta":"flaiarca@gmail.com","tiendaVenta":"","fechaCompra":"2026-02-09","numeroPedidoVenta":""},{"id":"t_gukwwys8","concertId":"c_9uyiesxu","lote":"10507385","seccion":"428 visibilidad reducida","fila":"12","asiento":"3","precioCompra":94.3,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster","numeroPedidoCompra":"10507385","emailCuenta":"flaiarca@gmail.com","tiendaVenta":"","fechaCompra":"2026-02-09","numeroPedidoVenta":""},{"id":"t_t0086qo7","concertId":"c_9uyiesxu","lote":"10507385","seccion":"428 visibilidad reducida","fila":"12","asiento":"4","precioCompra":94.3,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster","numeroPedidoCompra":"10507385","emailCuenta":"flaiarca@gmail.com","tiendaVenta":"","fechaCompra":"2026-02-09","numeroPedidoVenta":""},{"id":"t_phgx6l87","concertId":"c_9uyiesxu","lote":"10507385","seccion":"428 visibilidad reducida","fila":"12","asiento":"5","precioCompra":94.3,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster","numeroPedidoCompra":"10507385","emailCuenta":"flaiarca@gmail.com","tiendaVenta":"","fechaCompra":"2026-02-09","numeroPedidoVenta":""},{"id":"t_5r3k5g6q","concertId":"c_9uyiesxu","lote":"10507385","seccion":"428 visibilidad reducida","fila":"12","asiento":"6","precioCompra":94.3,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster","numeroPedidoCompra":"10507385","emailCuenta":"flaiarca@gmail.com","tiendaVenta":"","fechaCompra":"2026-02-09","numeroPedidoVenta":""},{"id":"t_bneknl4y","concertId":"c_9uyiesxu","lote":"10507385","seccion":"428 visibilidad reducida","fila":"12","asiento":"7","precioCompra":94.3,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster","numeroPedidoCompra":"10507385","emailCuenta":"flaiarca@gmail.com","tiendaVenta":"","fechaCompra":"2026-02-09","numeroPedidoVenta":""},{"id":"t_yh3rn0hz","concertId":"c_9uyiesxu","lote":"10507385","seccion":"428 visibilidad reducida","fila":"12","asiento":"8","precioCompra":94.3,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster","numeroPedidoCompra":"10507385","emailCuenta":"flaiarca@gmail.com","tiendaVenta":"","fechaCompra":"2026-02-09","numeroPedidoVenta":""},{"id":"t_8ruw3ukz","concertId":"c_5wf22gd0","lote":"10508077","seccion":"428 Vivibilidad reducida","fila":"5","asiento":"28","precioCompra":95.3,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster","numeroPedidoCompra":"10508077","emailCuenta":"flaiarca@gmail.com","tiendaVenta":"","fechaCompra":"2026-02-09","numeroPedidoVenta":""},{"id":"t_2f28ou9v","concertId":"c_5wf22gd0","lote":"10508077","seccion":"428 Vivibilidad reducida","fila":"5","asiento":"29","precioCompra":95.3,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster","numeroPedidoCompra":"10508077","emailCuenta":"flaiarca@gmail.com","tiendaVenta":"","fechaCompra":"2026-02-09","numeroPedidoVenta":""},{"id":"t_0187z8v8","concertId":"c_ldoqbqkp","lote":"10508198","seccion":"428 Vivibilidad reducida","fila":"11","asiento":"23","precioCompra":95.3,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster","numeroPedidoCompra":"10508198","emailCuenta":"flaiarca@gmail.com","tiendaVenta":"","fechaCompra":"2026-02-09","numeroPedidoVenta":""},{"id":"t_iel8ximd","concertId":"c_ldoqbqkp","lote":"10508198","seccion":"428 Vivibilidad reducida","fila":"11","asiento":"24","precioCompra":95.3,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster","numeroPedidoCompra":"10508198","emailCuenta":"flaiarca@gmail.com","tiendaVenta":"","fechaCompra":"2026-02-09","numeroPedidoVenta":""},{"id":"t_530uhoy2","concertId":"c_4l8e8o9f","lote":"10509213","seccion":"BOX203Q","fila":"1","asiento":"2","precioCompra":140.8,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster","numeroPedidoCompra":"10509213","emailCuenta":"flaiarca@gmail.com","tiendaVenta":"","fechaCompra":"2026-02-09","numeroPedidoVenta":""},{"id":"t_p0wjzi25","concertId":"c_4l8e8o9f","lote":"10509213","seccion":"BOX203Q","fila":"1","asiento":"3","precioCompra":140.8,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster","numeroPedidoCompra":"10509213","emailCuenta":"flaiarca@gmail.com","tiendaVenta":"","fechaCompra":"2026-02-09","numeroPedidoVenta":""},{"id":"t_7gktwu6o","concertId":"c_swcldf91","lote":"10508552","seccion":"235P visibilidad reducida","fila":"7","asiento":"30","precioCompra":106.8,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster","numeroPedidoCompra":"10508552","emailCuenta":"flaiarca@gmail.com","tiendaVenta":"","fechaCompra":"2026-02-09","numeroPedidoVenta":""},{"id":"t_8nmz39oj","concertId":"c_swcldf91","lote":"10508552","seccion":"235P visibilidad reducida","fila":"7","asiento":"32","precioCompra":106.8,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster","numeroPedidoCompra":"10508552","emailCuenta":"flaiarca@gmail.com","tiendaVenta":"","fechaCompra":"2026-02-09","numeroPedidoVenta":""},{"id":"t_o3ram9qi","concertId":"c_5wf22gd0","lote":"10509558","seccion":"328 Visibilidad Reducida","fila":"6","asiento":"7","precioCompra":106.8,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster","numeroPedidoCompra":"10509558","emailCuenta":"flaiarca@gmail.com","tiendaVenta":"","fechaCompra":"2026-02-09","numeroPedidoVenta":""},{"id":"t_jv27jx47","concertId":"c_5wf22gd0","lote":"10509558","seccion":"328 Visibilidad Reducida","fila":"6","asiento":"8","precioCompra":106.8,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster","numeroPedidoCompra":"10509558","emailCuenta":"flaiarca@gmail.com","tiendaVenta":"","fechaCompra":"2026-02-09","numeroPedidoVenta":""},{"id":"t_bq0z0yz4","concertId":"c_3a8x1qlc","lote":"10509993","seccion":"229 reducida","fila":"3","asiento":"5","precioCompra":140.8,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster","numeroPedidoCompra":"10509993","emailCuenta":"flaiarca@gmail.com","tiendaVenta":"","fechaCompra":"2026-02-09","numeroPedidoVenta":""},{"id":"t_803hmki3","concertId":"c_3a8x1qlc","lote":"10509993","seccion":"229 reducida","fila":"3","asiento":"6","precioCompra":140.8,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster","numeroPedidoCompra":"10509993","emailCuenta":"flaiarca@gmail.com","tiendaVenta":"","fechaCompra":"2026-02-09","numeroPedidoVenta":""},{"id":"t_lpbje7u4","concertId":"c_ldoqbqkp","lote":"10510152","seccion":"504 visibilidad lateral","fila":"22","asiento":"3","precioCompra":95.3,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster","numeroPedidoCompra":"10510152","emailCuenta":"flaiarca@gmail.com","tiendaVenta":"","fechaCompra":"2026-02-09","numeroPedidoVenta":""},{"id":"t_iz3yau83","concertId":"c_ldoqbqkp","lote":"10510152","seccion":"504 visibilidad lateral","fila":"22","asiento":"4","precioCompra":95.3,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster","numeroPedidoCompra":"10510152","emailCuenta":"flaiarca@gmail.com","tiendaVenta":"","fechaCompra":"2026-02-09","numeroPedidoVenta":""},{"id":"t_13kp8fsi","concertId":"c_cfln9wmu","lote":"29-33961/NY2","seccion":"306","fila":"25","asiento":"13","precioCompra":84.04,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster US","numeroPedidoCompra":"29-33961/NY2","emailCuenta":"flaiarca@gmail.com","tiendaVenta":"","fechaCompra":"2026-01-24","numeroPedidoVenta":""},{"id":"t_jib1bj72","concertId":"c_cfln9wmu","lote":"29-33961/NY2","seccion":"306","fila":"25","asiento":"14","precioCompra":84.04,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster US","numeroPedidoCompra":"29-33961/NY2","emailCuenta":"flaiarca@gmail.com","tiendaVenta":"","fechaCompra":"2026-01-24","numeroPedidoVenta":""},{"id":"t_g1ih20fp","concertId":"c_p4b0zy1a","lote":"22-58053/FLO","seccion":"232","fila":"V","asiento":"3","precioCompra":168.68,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster US","numeroPedidoCompra":"22-58053/FLO","emailCuenta":"flaiarca@gmail.com","tiendaVenta":"","fechaCompra":"2026-01-24","numeroPedidoVenta":""},{"id":"t_n6hpmjzx","concertId":"c_p4b0zy1a","lote":"22-58053/FLO","seccion":"232","fila":"V","asiento":"4","precioCompra":168.68,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster US","numeroPedidoCompra":"22-58053/FLO","emailCuenta":"flaiarca@gmail.com","tiendaVenta":"","fechaCompra":"2026-01-24","numeroPedidoVenta":""},{"id":"t_fxiralwy","concertId":"c_nov2nvkn","lote":"13-30948/DAL","seccion":"22","fila":"71","asiento":"9","precioCompra":111.85,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster US","numeroPedidoCompra":"13-30948/DAL","emailCuenta":"flaiarca@gmail.com","tiendaVenta":"","fechaCompra":"2026-01-24","numeroPedidoVenta":""},{"id":"t_8lakw4cc","concertId":"c_nov2nvkn","lote":"13-30948/DAL","seccion":"22","fila":"71","asiento":"1","precioCompra":111.85,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster US","numeroPedidoCompra":"13-30948/DAL","emailCuenta":"flaiarca@gmail.com","tiendaVenta":"","fechaCompra":"2026-01-24","numeroPedidoVenta":""},{"id":"t_zime3ko1","concertId":"c_u7s2uhdh","lote":"10117697","seccion":"8","fila":"17","asiento":"1","precioCompra":74.5,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster ES","numeroPedidoCompra":"10117697","emailCuenta":"flaisnkrs@gmail.com","tiendaVenta":"","fechaCompra":"2026-12-09","numeroPedidoVenta":""},{"id":"t_vs6dzaui","concertId":"c_u7s2uhdh","lote":"10117697","seccion":"8","fila":"17","asiento":"3","precioCompra":74.5,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster ES","numeroPedidoCompra":"10117697","emailCuenta":"flaisnkrs@gmail.com","tiendaVenta":"","fechaCompra":"2026-12-09","numeroPedidoVenta":""},{"id":"t_5o303dyj","concertId":"c_3hapnro2","lote":"10116446","seccion":"305","fila":"38","asiento":"1","precioCompra":63.5,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster ES","numeroPedidoCompra":"10116446","emailCuenta":"flaisnkrs@gmail.com","tiendaVenta":"","fechaCompra":"2026-12-09","numeroPedidoVenta":""},{"id":"t_ax2mtj0a","concertId":"c_3hapnro2","lote":"10116446","seccion":"305","fila":"38","asiento":"2","precioCompra":63.5,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster ES","numeroPedidoCompra":"10116446","emailCuenta":"flaisnkrs@gmail.com","tiendaVenta":"","fechaCompra":"2026-12-09","numeroPedidoVenta":""},{"id":"t_y2uvkz3m","concertId":"c_uq6r5hu0","lote":"10119356","seccion":"113","fila":"17","asiento":"6","precioCompra":91.5,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster ES","numeroPedidoCompra":"10119356","emailCuenta":"flaisnkrs@gmail.com","tiendaVenta":"","fechaCompra":"2026-12-09","numeroPedidoVenta":""},{"id":"t_0ijga8jy","concertId":"c_uq6r5hu0","lote":"10119356","seccion":"113","fila":"17","asiento":"8","precioCompra":91.5,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster ES","numeroPedidoCompra":"10119356","emailCuenta":"flaisnkrs@gmail.com","tiendaVenta":"","fechaCompra":"2026-12-09","numeroPedidoVenta":""},{"id":"t_33nqyp7e","concertId":"c_mjh4nij2","lote":"10119908","seccion":"5","fila":"15","asiento":"7","precioCompra":74.5,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster ES","numeroPedidoCompra":"10119908","emailCuenta":"flaisnkrs@gmail.com","tiendaVenta":"","fechaCompra":"2026-12-09","numeroPedidoVenta":""},{"id":"t_jbwur4ai","concertId":"c_mjh4nij2","lote":"10119908","seccion":"5","fila":"15","asiento":"9","precioCompra":74.5,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster ES","numeroPedidoCompra":"10119908","emailCuenta":"flaisnkrs@gmail.com","tiendaVenta":"","fechaCompra":"2026-12-09","numeroPedidoVenta":""},{"id":"t_sqjftd5m","concertId":"c_rg7v8cfc","lote":"10123352","seccion":"303","fila":"34","asiento":"9","precioCompra":63.0,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster ES","numeroPedidoCompra":"10123352","emailCuenta":"flaisnkrs@gmail.com","tiendaVenta":"","fechaCompra":"2026-12-09","numeroPedidoVenta":""},{"id":"t_14axek39","concertId":"c_rg7v8cfc","lote":"10123352","seccion":"303","fila":"34","asiento":"11","precioCompra":63.0,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster ES","numeroPedidoCompra":"10123352","emailCuenta":"flaisnkrs@gmail.com","tiendaVenta":"","fechaCompra":"2026-12-09","numeroPedidoVenta":""},{"id":"t_ibstz3j2","concertId":"c_rg7v8cfc","lote":"10123352","seccion":"303","fila":"34","asiento":"13","precioCompra":63.0,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster ES","numeroPedidoCompra":"10123352","emailCuenta":"flaisnkrs@gmail.com","tiendaVenta":"","fechaCompra":"2026-12-09","numeroPedidoVenta":""},{"id":"t_dhmn84rk","concertId":"c_rg7v8cfc","lote":"10123352","seccion":"303","fila":"34","asiento":"15","precioCompra":63.0,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster ES","numeroPedidoCompra":"10123352","emailCuenta":"flaisnkrs@gmail.com","tiendaVenta":"","fechaCompra":"2026-12-09","numeroPedidoVenta":""},{"id":"t_fo0xh1pe","concertId":"c_l7hi4jgk","lote":"10128261","seccion":"9","fila":"21","asiento":"10","precioCompra":63.0,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster ES","numeroPedidoCompra":"10128261","emailCuenta":"flaisnkrs@gmail.com","tiendaVenta":"","fechaCompra":"2026-12-09","numeroPedidoVenta":""},{"id":"t_khqau1nc","concertId":"c_l7hi4jgk","lote":"10128261","seccion":"9","fila":"21","asiento":"12","precioCompra":63.0,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster ES","numeroPedidoCompra":"10128261","emailCuenta":"flaisnkrs@gmail.com","tiendaVenta":"","fechaCompra":"2026-12-09","numeroPedidoVenta":""},{"id":"t_eabthex5","concertId":"c_l7hi4jgk","lote":"10128261","seccion":"9","fila":"21","asiento":"14","precioCompra":63.0,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster ES","numeroPedidoCompra":"10128261","emailCuenta":"flaisnkrs@gmail.com","tiendaVenta":"","fechaCompra":"2026-12-09","numeroPedidoVenta":""},{"id":"t_mx5tqh6t","concertId":"c_l7hi4jgk","lote":"10128261","seccion":"9","fila":"21","asiento":"16","precioCompra":63.0,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster ES","numeroPedidoCompra":"10128261","emailCuenta":"flaisnkrs@gmail.com","tiendaVenta":"","fechaCompra":"2026-12-09","numeroPedidoVenta":""},{"id":"t_m88o5vma","concertId":"c_v7i4ecfu","lote":"10131684","seccion":"6","fila":"25","asiento":"2","precioCompra":63.0,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster ES","numeroPedidoCompra":"10131684","emailCuenta":"flaisnkrs@gmail.com","tiendaVenta":"","fechaCompra":"2026-12-09","numeroPedidoVenta":""},{"id":"t_3i92ztrb","concertId":"c_v7i4ecfu","lote":"10131684","seccion":"6","fila":"25","asiento":"4","precioCompra":63.0,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster ES","numeroPedidoCompra":"10131684","emailCuenta":"flaisnkrs@gmail.com","tiendaVenta":"","fechaCompra":"2026-12-09","numeroPedidoVenta":""},{"id":"t_j25ceqef","concertId":"c_v7i4ecfu","lote":"10131684","seccion":"6","fila":"25","asiento":"6","precioCompra":63.0,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster ES","numeroPedidoCompra":"10131684","emailCuenta":"flaisnkrs@gmail.com","tiendaVenta":"","fechaCompra":"2026-12-09","numeroPedidoVenta":""},{"id":"t_5t1xzhsh","concertId":"c_v7i4ecfu","lote":"10131684","seccion":"6","fila":"25","asiento":"8","precioCompra":63.0,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"Ticketmaster ES","numeroPedidoCompra":"10131684","emailCuenta":"flaisnkrs@gmail.com","tiendaVenta":"","fechaCompra":"2026-12-09","numeroPedidoVenta":""},{"id":"t_6i72jtjv","concertId":"c_aqzoc6h3","lote":"31889699","seccion":"425","fila":"22","asiento":"121","precioCompra":74.05,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"TICKETMASTER NL","numeroPedidoCompra":"31889699","emailCuenta":"policias.75regiones@icloud.com","tiendaVenta":"","fechaCompra":"2026-01-27","numeroPedidoVenta":""},{"id":"t_mgj5auqt","concertId":"c_aqzoc6h3","lote":"31889699","seccion":"425","fila":"22","asiento":"122","precioCompra":74.05,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"TICKETMASTER NL","numeroPedidoCompra":"31889699","emailCuenta":"policias.75regiones@icloud.com","tiendaVenta":"","fechaCompra":"2026-01-27","numeroPedidoVenta":""},{"id":"t_9gme272f","concertId":"c_dm2658kr","lote":"","seccion":"405","fila":"J","asiento":"569","precioCompra":147.19,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"AXS","numeroPedidoCompra":"","emailCuenta":"rogerflaips4@gmail.com","tiendaVenta":"","fechaCompra":"2025-09-16","numeroPedidoVenta":""},{"id":"t_ro2ldc8t","concertId":"c_dm2658kr","lote":"","seccion":"405","fila":"J","asiento":"571","precioCompra":147.19,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"AXS","numeroPedidoCompra":"","emailCuenta":"rogerflaips4@gmail.com","tiendaVenta":"","fechaCompra":"2025-09-16","numeroPedidoVenta":""},{"id":"t_x25fg3v8","concertId":"c_dm2658kr","lote":"","seccion":"405","fila":"J","asiento":"3","precioCompra":147.19,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"AXS","numeroPedidoCompra":"","emailCuenta":"rogerflaips4@gmail.com","tiendaVenta":"","fechaCompra":"2025-09-16","numeroPedidoVenta":""},{"id":"t_af1j1oat","concertId":"c_riq6ml2e","lote":"","seccion":"\tFloor Standing","fila":"","asiento":"1","precioCompra":65.36,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"AXS","numeroPedidoCompra":"","emailCuenta":"","tiendaVenta":"","fechaCompra":"2025-09-16","numeroPedidoVenta":""},{"id":"t_ubvssepy","concertId":"c_riq6ml2e","lote":"","seccion":"\tFloor Standing","fila":"","asiento":"2","precioCompra":65.36,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"AXS","numeroPedidoCompra":"","emailCuenta":"","tiendaVenta":"","fechaCompra":"2025-09-16","numeroPedidoVenta":""},{"id":"t_zg0wbkgv","concertId":"c_91jf8dc3","lote":"","seccion":"405","fila":"T","asiento":"913","precioCompra":294.14,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"AXS","numeroPedidoCompra":"","emailCuenta":"","tiendaVenta":"","fechaCompra":"2025-09-16","numeroPedidoVenta":""},{"id":"t_nyb5sywx","concertId":"c_91jf8dc3","lote":"","seccion":"405","fila":"T","asiento":"916","precioCompra":294.14,"estado":"disponible","precioVenta":null,"fechaVenta":null,"webCompra":"AXS","numeroPedidoCompra":"","emailCuenta":"","tiendaVenta":"","fechaCompra":"2025-09-16","numeroPedidoVenta":""}]};
+
+function initData(){
+  if(localStorage.getItem('tv3_imported')) return;
+  sc(IMPORT_DATA.concerts); st(IMPORT_DATA.tickets);
+  localStorage.setItem('tv3_imported','1');
+}
+
+// ═══════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════
+let CID=null; // current concert id
+let dashYear='all', concertYear='all', ticketYear='all', saleYear='all', resultYear='all';
+let calDate=new Date();
+let editCID=null, venueData={};
+let vsTimeout=null;
+
+// ═══════════════════════════════════════
+// NAV
+// ═══════════════════════════════════════
+function goTo(p){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('sec-'+p).classList.add('active');
+  const m={dashboard:0,conciertos:1,entradas:2,ventas:3,resultados:4};
+  if(m[p]!==undefined) document.querySelectorAll('.nav-item')[m[p]].classList.add('active');
+  if(p==='dashboard') renderDash();
+  if(p==='conciertos') renderConcerts();
+  if(p==='entradas'){renderTickets();fillConcertFilter()}
+  if(p==='ventas') renderSales();
+  if(p==='resultados') renderResults();
+}
+function goDetail(id){
+  CID=id;
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('sec-concert-detail').classList.add('active');
+  document.querySelectorAll('.nav-item')[1].classList.add('active');
+  renderDetail(id);
+}
+
+// ═══════════════════════════════════════
+// YEAR FILTERS
+// ═══════════════════════════════════════
+function setYr(tabsId,val,el){
+  document.querySelectorAll('#'+tabsId+' .yr-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active'); return val;
+}
+function setDashYear(y,el){dashYear=setYr('dash-yr-tabs',y,el);renderDash()}
+function setConcertYear(y,el){concertYear=setYr('concert-yr-tabs',y,el);renderConcerts()}
+function setTicketYear(y,el){ticketYear=y;document.querySelectorAll('#sec-entradas .yr-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderTickets()}
+function setSaleYear(y,el){saleYear=y;document.querySelectorAll('#sec-ventas .yr-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderSales()}
+function setResultYear(y,el){resultYear=y;document.querySelectorAll('#sec-resultados .yr-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderResults()}
+
+function yrMatch(fecha,yr){if(yr==='all') return true; return (fecha||'').startsWith(yr)}
+
+// ═══════════════════════════════════════
+// MODALS
+// ═══════════════════════════════════════
+function openModal(id){document.getElementById(id).classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open');if(id==='modal-concert'){clearCForm();editCID=null}}
+
+function openModalAddEntrada(){
+  ['t-web','t-pedido','t-email','t-sec','t-fila','t-precio'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('t-qty').value=1;
+  document.getElementById('t-fcompra').value=new Date().toISOString().slice(0,10);
+  document.getElementById('lote-rows').innerHTML='';
+  openModal('modal-ticket');
+}
+
+function clearCForm(){
+  ['c-artista','c-fecha','c-recinto','c-ciudad','c-mapa','c-notas'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('mc-title').textContent='Nuevo concierto';
+  document.getElementById('vs-box').classList.remove('show');
+}
+
+function editCurrentConcert(){
+  const c=gc().find(x=>x.id===CID);if(!c)return;
+  editCID=c.id;
+  document.getElementById('c-artista').value=c.artista||'';
+  document.getElementById('c-fecha').value=c.fecha||'';
+  document.getElementById('c-recinto').value=c.recinto||'';
+  document.getElementById('c-ciudad').value=c.ciudad||'';
+  document.getElementById('c-mapa').value=c.mapa||'';
+  document.getElementById('c-notas').value=c.notas||'';
+  document.getElementById('mc-title').textContent='Editar concierto';
+  openModal('modal-concert');
+}
+
+// ═══════════════════════════════════════
+// VENUE SEARCH
+// ═══════════════════════════════════════
+function onConcertChange(){clearTimeout(vsTimeout);vsTimeout=setTimeout(searchVenue,900)}
+async function searchVenue(){
+  const a=document.getElementById('c-artista').value.trim();
+  const c=document.getElementById('c-ciudad').value.trim();
+  if(!a||!c) return;
+  try{
+    const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(a+' concert arena '+c)}&format=json&limit=3&addressdetails=1`,{headers:{'Accept-Language':'es'}});
+    const d=await r.json();
+    if(d&&d.length>0){
+      const v=d[0];
+      const name=v.display_name.split(',')[0];
+      venueData={name,lat:v.lat,lon:v.lon};
+      document.getElementById('vs-text').innerHTML=`<strong>${name}</strong><br><span style="font-size:11px;color:var(--text3)">${v.display_name.split(',').slice(0,3).join(',')}</span>`;
+      document.getElementById('vs-box').classList.add('show');
+    }
+  }catch(e){}
+}
+function acceptVenue(){
+  if(venueData.name){
+    document.getElementById('c-recinto').value=venueData.name;
+    if(venueData.lat){document.getElementById('c-mapa').value=`https://maps.google.com/maps?q=${venueData.lat},${venueData.lon}&z=16&output=embed`}
+    document.getElementById('vs-box').classList.remove('show');
+  }
+}
+
+// ═══════════════════════════════════════
+// SAVE CONCERT
+// ═══════════════════════════════════════
+function saveConcert(){
+  const a=document.getElementById('c-artista').value.trim();
+  if(!a){alert('El artista es obligatorio');return}
+  const concerts=gc();
+  const data={id:editCID||DB.id(),artista:a,fecha:document.getElementById('c-fecha').value,recinto:document.getElementById('c-recinto').value.trim(),ciudad:document.getElementById('c-ciudad').value.trim(),mapa:document.getElementById('c-mapa').value.trim(),notas:document.getElementById('c-notas').value.trim()};
+  if(editCID){const i=concerts.findIndex(c=>c.id===editCID);concerts[i]=data}else{concerts.push(data)}
+  sc(concerts);closeModal('modal-concert');
+  if(CID) renderDetail(CID);
+  renderConcerts();renderDash();
+}
+
+// ═══════════════════════════════════════
+// SAVE TICKETS
+// ═══════════════════════════════════════
+function genLote(){
+  const qty=parseInt(document.getElementById('t-qty').value)||1;
+  const fila=document.getElementById('t-fila').value;
+  const precio=document.getElementById('t-precio').value;
+  const c=document.getElementById('lote-rows');
+  if(qty<=1){c.innerHTML='';return}
+  let h=`<div style="margin-bottom:6px;font-size:10px;font-family:'DM Mono',monospace;color:var(--text3);letter-spacing:1px;text-transform:uppercase">Personaliza cada entrada</div>`;
+  for(let i=0;i<qty;i++){
+    h+=`<div style="background:var(--bg3);border-radius:var(--radius2);padding:7px 10px;margin-bottom:5px;display:flex;align-items:center;gap:8px">
+      <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);width:24px">#${i+1}</span>
+      <div style="flex:1;display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px">
+        <input type="text" id="lr-a-${i}" placeholder="Asiento" style="font-size:11.5px;padding:5px 9px">
+        <input type="text" id="lr-f-${i}" placeholder="Fila" value="${fila}" style="font-size:11.5px;padding:5px 9px">
+        <input type="number" id="lr-p-${i}" placeholder="Precio €" value="${precio}" step="0.01" style="font-size:11.5px;padding:5px 9px">
+      </div>
+    </div>`;
+  }
+  c.innerHTML=h;
+}
+
+function saveTickets(){
+  if(!CID) return;
+  const qty=parseInt(document.getElementById('t-qty').value)||1;
+  const sec=document.getElementById('t-sec').value.trim();
+  const filaBase=document.getElementById('t-fila').value.trim();
+  const precioTotal=parseFloat(document.getElementById('t-precio').value)||0;
+  const web=document.getElementById('t-web').value.trim();
+  const pedido=document.getElementById('t-pedido').value.trim();
+  const email=document.getElementById('t-email').value.trim();
+  const fcompra=document.getElementById('t-fcompra').value;
+  const tickets=gt();
+  for(let i=0;i<qty;i++){
+    let fila=filaBase,asiento=String(i+1),precio=precioTotal/qty;
+    if(qty>1){
+      fila=document.getElementById(`lr-f-${i}`)?.value.trim()||filaBase;
+      asiento=document.getElementById(`lr-a-${i}`)?.value.trim()||String(i+1);
+      precio=parseFloat(document.getElementById(`lr-p-${i}`)?.value)||precioTotal/qty;
+    }
+    tickets.push({id:DB.id(),concertId:CID,lote:pedido,seccion:sec,fila,asiento,precioCompra:round2(precio),estado:'disponible',precioVenta:null,fechaVenta:null,webCompra:web,numeroPedidoCompra:pedido,emailCuenta:email,tiendaVenta:'',fechaCompra:fcompra,numeroPedidoVenta:''});
+  }
+  st(tickets);closeModal('modal-ticket');renderDetail(CID);renderDash();updateCount();
+}
+
+// ═══════════════════════════════════════
+// VENTA
+// ═══════════════════════════════════════
+function openVenta(tid){
+  const t=gt().find(x=>x.id===tid);if(!t)return;
+  const c=gc().find(x=>x.id===t.concertId);
+  document.getElementById('v-id').value=tid;
+  document.getElementById('v-info').innerHTML=`<div style="background:var(--bg3);border-radius:8px;padding:9px 12px"><div style="font-weight:600;margin-bottom:3px">${c?.artista||''}</div><div style="font-size:11.5px;color:var(--text3)">${t.seccion} · Fila ${t.fila} · Asiento ${t.asiento} · Compra: <strong>${fmt(t.precioCompra)}</strong></div></div>`;
+  document.getElementById('v-precio').value='';
+  document.getElementById('v-fecha').value=new Date().toISOString().slice(0,10);
+  document.getElementById('v-tienda').value=t.tiendaVenta||'';
+  document.getElementById('v-pedido').value=t.numeroPedidoVenta||'';
+  document.getElementById('v-profit').innerHTML='—';
+  openModal('modal-venta');
+}
+function calcProfit(){
+  const t=gt().find(x=>x.id===document.getElementById('v-id').value);
+  const v=parseFloat(document.getElementById('v-precio').value)||0;
+  if(!t||!v){document.getElementById('v-profit').innerHTML='—';return}
+  const p=v-t.precioCompra;
+  document.getElementById('v-profit').innerHTML=`<span class="${pc(p)}">${p>=0?'+':''}${fmt(p)}</span>`;
+}
+function saveVenta(){
+  const tid=document.getElementById('v-id').value;
+  const pv=parseFloat(document.getElementById('v-precio').value);
+  if(!pv){alert('Introduce el precio de venta');return}
+  const tickets=gt();
+  const i=tickets.findIndex(x=>x.id===tid);
+  tickets[i]={...tickets[i],estado:'vendida',precioVenta:pv,fechaVenta:document.getElementById('v-fecha').value,tiendaVenta:document.getElementById('v-tienda').value,numeroPedidoVenta:document.getElementById('v-pedido').value};
+  st(tickets);closeModal('modal-venta');
+  if(CID) renderDetail(CID);
+  renderDash();renderTickets();renderSales();renderResults();
+}
+
+function toggleReserva(id){
+  const ts=gt();const i=ts.findIndex(x=>x.id===id);
+  ts[i].estado=ts[i].estado==='reservada'?'disponible':'reservada';
+  st(ts);if(CID) renderDetail(CID);renderTickets();
+}
+function delTicket(id){
+  if(!confirm('¿Eliminar esta entrada?'))return;
+  st(gt().filter(t=>t.id!==id));if(CID) renderDetail(CID);renderDash();renderTickets();updateCount();
+}
+function delConcert(id){
+  if(!confirm('¿Eliminar este concierto y todas sus entradas?'))return;
+  sc(gc().filter(c=>c.id!==id));st(gt().filter(t=>t.concertId!==id));goTo('conciertos');
+}
+
+// ═══════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════
+const round2=n=>Math.round(n*100)/100;
+const fmt=n=>(n||0).toLocaleString('es-ES',{style:'currency',currency:'EUR',minimumFractionDigits:2});
+const fd=d=>{if(!d)return'—';return new Date(d+'T12:00:00').toLocaleDateString('es-ES',{day:'2-digit',month:'short',year:'numeric'})};
+const pc=v=>v>0?'pp':v<0?'pn':'pz';
+const badge=e=>{if(e==='disponible')return`<span class="badge bg-green">Disponible</span>`;if(e==='reservada')return`<span class="badge bg-yellow">Reservada</span>`;if(e==='vendida')return`<span class="badge bg-cyan">Vendida</span>`;return`<span class="badge bg-gray">${e}</span>`};
+const trunc=(s,n)=>s&&s.length>n?s.slice(0,n)+'…':s||'—';
+function updateCount(){document.getElementById('sb-count').textContent=gt().length}
+function fr(l,v,c){return`<div style="display:flex;justify-content:space-between;font-size:12.5px"><span style="color:var(--text3)">${l}</span><span style="font-weight:600;color:${c}">${v}</span></div>`}
+
+// ═══════════════════════════════════════
+// CALENDAR
+// ═══════════════════════════════════════
+const DAYS=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+const MONTHS=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+function calPrev(){calDate=new Date(calDate.getFullYear(),calDate.getMonth()-1,1);renderCal()}
+function calNext(){calDate=new Date(calDate.getFullYear(),calDate.getMonth()+1,1);renderCal()}
+
+function renderCal(){
+  const y=calDate.getFullYear(),m=calDate.getMonth();
+  document.getElementById('cal-month-label').textContent=`${MONTHS[m]} ${y}`;
+  // Heads
+  document.getElementById('cal-heads').innerHTML=DAYS.map(d=>`<div class="cal-head">${d}</div>`).join('');
+  // Days
+  const first=new Date(y,m,1);
+  let dow=first.getDay(); dow=dow===0?6:dow-1; // Mon=0
+  const daysInMonth=new Date(y,m+1,0).getDate();
+  const today=new Date();
+  const concerts=gc();
+  // Build concert map by date
+  const cmap={};
+  concerts.forEach(c=>{if(c.fecha) {const k=c.fecha.slice(0,10); if(!cmap[k])cmap[k]=[]; cmap[k].push(c)}});
+  let cells='';
+  // Leading empty cells
+  for(let i=0;i<dow;i++) cells+=`<div class="cal-day other-month"></div>`;
+  for(let d=1;d<=daysInMonth;d++){
+    const dateStr=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday=today.getFullYear()===y&&today.getMonth()===m&&today.getDate()===d;
+    const evts=cmap[dateStr]||[];
+    let evtHtml=evts.map(c=>`<div class="cal-event" onclick="goDetail('${c.id}')" title="${c.artista}">${c.artista}</div>`).join('');
+    cells+=`<div class="cal-day${isToday?' today':''}"><span class="cal-dn">${d}</span>${evtHtml}</div>`;
+  }
+  document.getElementById('cal-days').innerHTML=cells;
+}
+
+// ═══════════════════════════════════════
+// DEDUPLICATE concerts for display
+// ═══════════════════════════════════════
+// Group concerts by artista+ciudad (same name = same group)
+function groupConcerts(list){
+  // Returns unique concerts (same artista+ciudad grouped, show first date + count)
+  const seen=new Set();
+  return list.filter(c=>{
+    const k=c.artista+'|'+c.ciudad;
+    if(seen.has(k))return false;
+    seen.add(k);return true;
+  });
+}
+
+// ═══════════════════════════════════════
+// RENDER DASHBOARD
+// ═══════════════════════════════════════
+function renderDash(){
+  const concerts=gc(), tickets=gt();
+  const yr=dashYear;
+  // Filter by year based on concert fecha
+  const concertIds=new Set(concerts.filter(c=>yrMatch(c.fecha,yr)).map(c=>c.id));
+  const ts=tickets.filter(t=>concertIds.has(t.concertId));
+  const inv=ts.reduce((s,t)=>s+(t.precioCompra||0),0);
+  const vend=ts.filter(t=>t.estado==='vendida');
+  const ing=vend.reduce((s,t)=>s+(t.precioVenta||0),0);
+  const prof=ing-vend.reduce((s,t)=>s+(t.precioCompra||0),0);
+  const disp=ts.filter(t=>t.estado==='disponible').length;
+
+  document.getElementById('dash-year-label').textContent=yr==='all'?'Todos los años':yr;
+  document.getElementById('kpis').innerHTML=`
+    <div class="kpi-card kc-cyan"><div class="kpi-label">Total invertido</div><div class="kpi-value kv-cyan">${fmt(inv)}</div><div class="kpi-sub">${ts.length} entradas</div></div>
+    <div class="kpi-card kc-accent"><div class="kpi-label">Total ingresado</div><div class="kpi-value kv-accent">${fmt(ing)}</div><div class="kpi-sub">${vend.length} vendidas</div></div>
+    <div class="kpi-card ${prof>=0?'kc-green':'kc-red'}"><div class="kpi-label">Beneficio neto</div><div class="kpi-value ${prof>=0?'kv-green':'kv-red'}">${prof>=0?'+':''}${fmt(prof)}</div><div class="kpi-sub">Sobre vendidas</div></div>
+    <div class="kpi-card kc-accent"><div class="kpi-label">Stock disponible</div><div class="kpi-value" style="color:var(--text)">${disp}</div><div class="kpi-sub">${concerts.filter(c=>yrMatch(c.fecha,yr)).length} conciertos</div></div>
+  `;
+
+  // Calendar
+  renderCal();
+
+  // Últimas ventas
+  const lastSales=tickets.filter(t=>t.estado==='vendida'&&concertIds.has(t.concertId)).sort((a,b)=>(b.fechaVenta||'')>(a.fechaVenta||'')?1:-1).slice(0,8);
+  document.getElementById('dash-ventas').innerHTML=lastSales.length===0?
+    `<div style="text-align:center;padding:30px;color:var(--text3);font-size:12px">Sin ventas aún</div>`:
+    lastSales.map(t=>{
+      const c=concerts.find(x=>x.id===t.concertId);
+      const p=(t.precioVenta||0)-t.precioCompra;
+      return`<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 16px;border-bottom:1px solid var(--border)">
+        <div><div style="font-weight:500;font-size:12.5px">${c?.artista||'—'}</div><div style="font-size:11px;color:var(--text3)">${t.seccion}${t.tiendaVenta?' · '+t.tiendaVenta:''} · ${fd(t.fechaVenta)}</div></div>
+        <span class="${pc(p)}">${p>=0?'+':''}${fmt(p)}</span>
+      </div>`;
+    }).join('');
+
+  // Próximos conciertos
+  const now=new Date().toISOString().slice(0,10);
+  const upcoming=concerts.filter(c=>yrMatch(c.fecha,yr)&&(c.fecha||'')>=now).sort((a,b)=>(a.fecha||'')>(b.fecha||'')?1:-1).slice(0,6);
+  document.getElementById('dash-concerts-title').textContent=yr==='all'?'Próximos conciertos':`Conciertos ${yr}`;
+  document.getElementById('dash-concerts').innerHTML=upcoming.length===0?
+    `<div style="text-align:center;padding:30px;color:var(--text3);font-size:12px">No hay próximos conciertos</div>`:
+    upcoming.map(c=>{
+      const ct=tickets.filter(t=>t.concertId===c.id);
+      const cv=ct.filter(t=>t.estado==='vendida');
+      return`<div class="cc" onclick="goDetail('${c.id}')">
+        <div class="cc-av">${(c.artista||'?')[0].toUpperCase()}</div>
+        <div class="cc-info"><div class="cc-name">${c.artista}</div><div class="cc-meta">${[c.recinto,c.ciudad,fd(c.fecha)].filter(Boolean).join(' · ')}</div></div>
+        <div class="cc-stats">
+          <div><div class="sv">${ct.length}</div><div class="sl">Total</div></div>
+          <div><div class="sv" style="color:var(--green)">${cv.length}</div><div class="sl">Vend.</div></div>
+        </div>
+      </div>`;
+    }).join('');
+}
+
+// ═══════════════════════════════════════
+// RENDER CONCIERTOS (deduplicados)
+// ═══════════════════════════════════════
+let concertYearFilter='all';
+function renderConcerts(){
+  const q=(document.getElementById('sc')?.value||'').toLowerCase();
+  const yr=concertYear;
+  const tickets=gt();
+  // Group by artista+ciudad
+  const all=gc().filter(c=>yrMatch(c.fecha,yr)&&(!q||c.artista?.toLowerCase().includes(q)||c.ciudad?.toLowerCase().includes(q)||c.recinto?.toLowerCase().includes(q)));
+  // Build groups: artista+ciudad -> list of concerts
+  const groups={};
+  all.forEach(c=>{
+    const k=(c.artista+'__'+c.ciudad).toLowerCase();
+    if(!groups[k]) groups[k]=[];
+    groups[k].push(c);
+  });
+  document.getElementById('concerts-sub').textContent=`${Object.keys(groups).length} grupos · ${all.length} conciertos`;
+  const el=document.getElementById('concerts-list');
+  if(!el) return;
+  if(Object.keys(groups).length===0){el.innerHTML=`<div style="text-align:center;padding:50px;color:var(--text3)">No hay conciertos</div>`;return}
+  el.innerHTML=Object.values(groups).map(grp=>{
+    if(grp.length===1){
+      const c=grp[0];
+      const ct=tickets.filter(t=>t.concertId===c.id);
+      const cv=ct.filter(t=>t.estado==='vendida');
+      const p=cv.reduce((s,t)=>s+(t.precioVenta||0),0)-cv.reduce((s,t)=>s+(t.precioCompra||0),0);
+      return`<div class="cc" onclick="goDetail('${c.id}')">
+        <div class="cc-av">${(c.artista||'?')[0].toUpperCase()}</div>
+        <div class="cc-info"><div class="cc-name">${c.artista}</div><div class="cc-meta">${[c.recinto,c.ciudad,fd(c.fecha)].filter(Boolean).join(' · ')}</div></div>
+        <div class="cc-stats">
+          <div><div class="sv">${ct.length}</div><div class="sl">Entradas</div></div>
+          <div><div class="sv" style="color:var(--green)">${cv.length}</div><div class="sl">Vendidas</div></div>
+          <div><div class="sv ${pc(p)}">${p>=0?'+':''}${fmt(p)}</div><div class="sl">Beneficio</div></div>
+        </div>
+      </div>`;
+    } else {
+      // Multiple dates — show group header + sub-items
+      const allTs=tickets.filter(t=>grp.some(c=>c.id===t.concertId));
+      const allV=allTs.filter(t=>t.estado==='vendida');
+      const p=allV.reduce((s,t)=>s+(t.precioVenta||0),0)-allV.reduce((s,t)=>s+(t.precioCompra||0),0);
+      const sorted=grp.sort((a,b)=>(a.fecha||'')>(b.fecha||'')?1:-1);
+      return`<div style="border:1px solid var(--border);border-radius:var(--radius);margin-bottom:8px;overflow:hidden">
+        <div style="padding:12px 16px;background:var(--bg2);display:flex;align-items:center;gap:12px">
+          <div class="cc-av">${(grp[0].artista||'?')[0].toUpperCase()}</div>
+          <div style="flex:1"><div style="font-weight:600;font-size:13.5px">${grp[0].artista}${grp[0].ciudad?' — '+grp[0].ciudad:''}</div><div style="font-size:11px;color:var(--text3)">${grp.length} fechas</div></div>
+          <div class="cc-stats">
+            <div><div class="sv">${allTs.length}</div><div class="sl">Total</div></div>
+            <div><div class="sv" style="color:var(--green)">${allV.length}</div><div class="sl">Vend.</div></div>
+            <div><div class="sv ${pc(p)}">${p>=0?'+':''}${fmt(p)}</div><div class="sl">Benef.</div></div>
+          </div>
+        </div>
+        ${sorted.map(c=>{
+          const ct=tickets.filter(t=>t.concertId===c.id);
+          const cv=ct.filter(t=>t.estado==='vendida');
+          return`<div class="cc" style="border-radius:0;border:none;border-top:1px solid var(--border);margin:0;padding:9px 16px 9px 56px" onclick="goDetail('${c.id}')">
+            <div class="cc-info"><div class="cc-name" style="font-size:12.5px">${fd(c.fecha)}${c.recinto?' · '+c.recinto:''}</div></div>
+            <div class="cc-stats">
+              <div><div class="sv" style="font-size:13px">${ct.length}</div><div class="sl">Ent.</div></div>
+              <div><div class="sv" style="font-size:13px;color:var(--green)">${cv.length}</div><div class="sl">Vend.</div></div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>`;
+    }
+  }).join('');
+}
+
+// ═══════════════════════════════════════
+// RENDER DETAIL
+// ═══════════════════════════════════════
+function renderDetail(id){
+  const c=gc().find(x=>x.id===id);if(!c)return;
+  document.getElementById('det-title').textContent=c.artista;
+  document.getElementById('det-sub').textContent=[c.recinto,c.ciudad,fd(c.fecha)].filter(Boolean).join(' · ');
+  document.getElementById('det-info').innerHTML=[
+    {l:'Fecha evento',v:fd(c.fecha)},{l:'Recinto',v:c.recinto||'—'},{l:'Ciudad',v:c.ciudad||'—'},{l:'Notas',v:c.notas||'—'}
+  ].map(b=>`<div class="db"><div class="dl">${b.l}</div><div class="dv">${b.v}</div></div>`).join('');
+  const m=document.getElementById('det-map');
+  m.innerHTML=c.mapa?`<iframe src="${c.mapa}" allowfullscreen loading="lazy"></iframe>`:`<div><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin:0 auto 7px;display:block;opacity:.4"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><div>Añade la URL del mapa al editar</div></div>`;
+  const tickets=gt().filter(t=>t.concertId===id);
+  document.getElementById('det-tickets').innerHTML=tickets.length===0?
+    `<tr><td colspan="11" style="text-align:center;padding:28px;color:var(--text3)">Sin entradas — añade con el botón de arriba</td></tr>`:
+    tickets.map(t=>{
+      const p=t.estado==='vendida'?(t.precioVenta||0)-t.precioCompra:null;
+      return`<tr>
+        <td><span style="font-family:'DM Mono',monospace;font-size:10.5px;color:var(--text3)">${trunc(t.numeroPedidoCompra||t.lote,14)}</span></td>
+        <td>${t.seccion}</td><td>${t.fila}</td><td>${t.asiento}</td>
+        <td><span class="tag">${trunc(t.webCompra,11)}</span></td>
+        <td style="font-size:11px;color:var(--text3)">${trunc(t.emailCuenta,17)}</td>
+        <td>${fmt(t.precioCompra)}</td>
+        <td>${badge(t.estado)}</td>
+        <td>${t.precioVenta?fmt(t.precioVenta):'—'}</td>
+        <td>${p!==null?`<span class="${pc(p)}">${p>=0?'+':''}${fmt(p)}</span>`:'—'}</td>
+        <td><div style="display:flex;gap:4px;flex-wrap:wrap">
+          ${t.estado!=='vendida'?`<button class="btn btn-primary btn-sm" onclick="openVenta('${t.id}')">Vender</button>`:''}
+          ${t.estado==='disponible'?`<button class="btn btn-ghost btn-sm" onclick="toggleReserva('${t.id}')">Reservar</button>`:''}
+          ${t.estado==='reservada'?`<button class="btn btn-ghost btn-sm" onclick="toggleReserva('${t.id}')">Liberar</button>`:''}
+          <button class="btn btn-danger btn-sm" onclick="delTicket('${t.id}')">✕</button>
+        </div></td>
+      </tr>`;
+    }).join('');
+  const vd=tickets.filter(t=>t.estado==='vendida');
+  const inv=tickets.reduce((s,t)=>s+(t.precioCompra||0),0);
+  const ing=vd.reduce((s,t)=>s+(t.precioVenta||0),0);
+  const p=ing-vd.reduce((s,t)=>s+(t.precioCompra||0),0);
+  document.getElementById('det-finance').innerHTML=`
+    <div style="display:flex;flex-direction:column;gap:9px">
+      ${fr('Total invertido',fmt(inv),'var(--text)')}
+      ${fr('Total ingresado',fmt(ing),'var(--accent)')}
+      ${fr('Beneficio neto',(p>=0?'+':'')+fmt(p),p>=0?'var(--green)':'var(--red)')}
+      <div style="height:1px;background:var(--border);margin:3px 0"></div>
+      ${fr('Entradas vendidas',vd.length+' / '+tickets.length,'var(--text)')}
+      ${fr('Disponibles',tickets.filter(t=>t.estado==='disponible').length,'var(--text)')}
+    </div>
+    <div style="margin-top:14px"><button class="btn btn-danger btn-sm" onclick="delConcert('${id}')">Eliminar concierto</button></div>`;
+}
+
+// ═══════════════════════════════════════
+// RENDER STOCK
+// ═══════════════════════════════════════
+function fillConcertFilter(){
+  const sel=document.getElementById('ft-concert');if(!sel)return;
+  const cur=sel.value;
+  sel.innerHTML='<option value="">Todos los conciertos</option>'+gc().map(c=>`<option value="${c.id}"${c.id===cur?' selected':''}>${c.artista}${c.ciudad?' ('+c.ciudad+')':''} ${fd(c.fecha)}</option>`).join('');
+}
+function renderTickets(){
+  const q=(document.getElementById('st')?.value||'').toLowerCase();
+  const fc=document.getElementById('ft-concert')?.value||'';
+  const fe=document.getElementById('ft-estado')?.value||'';
+  const concerts=gc();
+  const tickets=gt().filter(t=>{
+    const c=concerts.find(x=>x.id===t.concertId);
+    if(!yrMatch(c?.fecha,ticketYear)) return false;
+    const txt=[c?.artista,c?.ciudad,t.seccion,t.fila,t.asiento,t.webCompra,t.emailCuenta,t.numeroPedidoCompra].join(' ').toLowerCase();
+    return(!q||txt.includes(q))&&(!fc||t.concertId===fc)&&(!fe||t.estado===fe);
+  });
+  const tb=document.getElementById('all-tickets');if(!tb)return;
+  if(tickets.length===0){tb.innerHTML=`<tr><td colspan="15" style="text-align:center;padding:36px;color:var(--text3)">Sin resultados</td></tr>`;return}
+  tb.innerHTML=tickets.map(t=>{
+    const c=concerts.find(x=>x.id===t.concertId);
+    const p=t.estado==='vendida'?(t.precioVenta||0)-t.precioCompra:null;
+    return`<tr>
+      <td style="cursor:pointer;color:var(--accent3);font-weight:500" onclick="goDetail('${t.concertId}')">${c?.artista||'—'}</td>
+      <td style="font-size:11px;color:var(--text2)">${c?.ciudad||'—'}</td>
+      <td style="font-size:11px">${fd(c?.fecha)}</td>
+      <td>${t.seccion}</td><td>${t.fila}</td><td>${t.asiento}</td>
+      <td><span class="tag">${trunc(t.webCompra,11)}</span></td>
+      <td style="font-size:11px;color:var(--text2)">${trunc(t.numeroPedidoCompra,13)}</td>
+      <td style="font-size:11px;color:var(--text3)">${trunc(t.emailCuenta,17)}</td>
+      <td>${fmt(t.precioCompra)}</td>
+      <td>${badge(t.estado)}</td>
+      <td>${t.precioVenta?fmt(t.precioVenta):'—'}</td>
+      <td style="font-size:11.5px;color:var(--text2)">${t.tiendaVenta||'—'}</td>
+      <td>${p!==null?`<span class="${pc(p)}">${p>=0?'+':''}${fmt(p)}</span>`:'—'}</td>
+      <td>${t.estado!=='vendida'?`<button class="btn btn-primary btn-sm" onclick="CID='${t.concertId}';openVenta('${t.id}')">Vender</button>`:''}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════
+// RENDER VENTAS
+// ═══════════════════════════════════════
+function renderSales(){
+  const q=(document.getElementById('sv')?.value||'').toLowerCase();
+  const concerts=gc();
+  const tickets=gt().filter(t=>t.estado==='vendida').sort((a,b)=>(b.fechaVenta||'')>(a.fechaVenta||'')?1:-1);
+  const yr=saleYear;
+  const filtered=tickets.filter(t=>{
+    const c=concerts.find(x=>x.id===t.concertId);
+    if(!yrMatch(c?.fecha,yr)) return false;
+    return!q||[c?.artista,c?.ciudad,t.seccion,t.tiendaVenta].join(' ').toLowerCase().includes(q);
+  });
+  const tb=document.getElementById('sales-tbody');if(!tb)return;
+  if(filtered.length===0){tb.innerHTML=`<tr><td colspan="10" style="text-align:center;padding:36px;color:var(--text3)">Sin ventas</td></tr>`;return}
+  tb.innerHTML=filtered.map(t=>{
+    const c=concerts.find(x=>x.id===t.concertId);
+    const p=(t.precioVenta||0)-t.precioCompra;
+    const mg=t.precioCompra>0?(p/t.precioCompra*100).toFixed(1):0;
+    return`<tr>
+      <td>${fd(t.fechaVenta)}</td>
+      <td style="cursor:pointer;color:var(--accent3);font-weight:500" onclick="goDetail('${t.concertId}')">${c?.artista||'—'}</td>
+      <td style="font-size:11px;color:var(--text2)">${c?.ciudad||'—'}</td>
+      <td>${t.seccion} · F${t.fila} · A${t.asiento}</td>
+      <td>${fmt(t.precioCompra)}</td><td>${fmt(t.precioVenta)}</td>
+      <td><span class="tag">${t.tiendaVenta||'—'}</span></td>
+      <td style="font-size:11px;color:var(--text2)">${t.numeroPedidoVenta||'—'}</td>
+      <td><span class="${pc(p)}">${p>=0?'+':''}${fmt(p)}</span></td>
+      <td><span class="${pc(parseFloat(mg))}">${mg>0?'+':''}${mg}%</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════
+// RENDER RESULTADOS
+// ═══════════════════════════════════════
+function renderResults(){
+  const concerts=gc().filter(c=>yrMatch(c.fecha,resultYear));
+  const tickets=gt();
+  const tb=document.getElementById('results-tbody');if(!tb)return;
+  if(concerts.length===0){tb.innerHTML=`<tr><td colspan="10" style="text-align:center;padding:36px;color:var(--text3)">Sin datos</td></tr>`;return}
+  tb.innerHTML=concerts.map(c=>{
+    const ts=tickets.filter(t=>t.concertId===c.id);
+    const vd=ts.filter(t=>t.estado==='vendida');
+    const inv=ts.reduce((s,t)=>s+(t.precioCompra||0),0);
+    const ing=vd.reduce((s,t)=>s+(t.precioVenta||0),0);
+    const p=ing-vd.reduce((s,t)=>s+(t.precioCompra||0),0);
+    const roi=inv>0?((ing-inv)/inv*100).toFixed(1):0;
+    return`<tr>
+      <td style="cursor:pointer;font-weight:600;color:var(--accent3)" onclick="goDetail('${c.id}')">${c.artista}</td>
+      <td style="font-size:11.5px;color:var(--text2)">${c.ciudad||'—'}</td>
+      <td>${fd(c.fecha)}</td>
+      <td>${ts.length}</td><td>${vd.length}</td><td>${ts.length-vd.length}</td>
+      <td>${fmt(inv)}</td><td>${fmt(ing)}</td>
+      <td><span class="${pc(p)}">${p>=0?'+':''}${fmt(p)}</span></td>
+      <td><span class="${pc(parseFloat(roi))}">${roi>0?'+':''}${roi}%</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+
+// ═══════════════════════════════════════
+// PWA — Service Worker + Install
+// ═══════════════════════════════════════
+const SW_CODE = `
+const CACHE = 'ticketvault-v3';
+const ASSETS = [location.pathname || '/'];
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
+});
+self.addEventListener('activate', e => {
+  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));
+});
+self.addEventListener('fetch', e => {
+  e.respondWith(caches.match(e.request).then(r => r || fetch(e.request).catch(()=>caches.match(e.request))));
+});
+`;
+
+function registerSW() {
+  if (!('serviceWorker' in navigator)) return;
+  const blob = new Blob([SW_CODE], {type: 'application/javascript'});
+  const url = URL.createObjectURL(blob);
+  navigator.serviceWorker.register(url, {scope: './'}).then(reg => {
+    console.log('SW registered');
+  }).catch(e => console.log('SW error:', e));
+}
+
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('pwa-banner').style.display = 'flex';
+});
+window.addEventListener('appinstalled', () => {
+  document.getElementById('pwa-banner').style.display = 'none';
+  deferredPrompt = null;
+});
+function installPWA() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(() => {
+    deferredPrompt = null;
+    document.getElementById('pwa-banner').style.display = 'none';
+  });
+}
+
+// iOS install tip (no beforeinstallprompt on Safari)
+function showiOSTip() {
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isSafari = /safari/i.test(navigator.userAgent) && !/chrome/i.test(navigator.userAgent);
+  const isStandalone = window.navigator.standalone;
+  if (isIOS && isSafari && !isStandalone && !localStorage.getItem('tv3_ios_tip')) {
+    const tip = document.createElement('div');
+    tip.style.cssText = 'position:fixed;bottom:max(20px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:16px 20px;z-index:2000;box-shadow:0 8px 32px rgba(0,0,0,.7);max-width:320px;width:90vw;text-align:center';
+    tip.innerHTML = \`<div style="font-size:22px;margin-bottom:8px">🎟️</div>
+      <div style="font-weight:600;font-size:13px;margin-bottom:6px">Instalar TicketVault en iOS</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.5">Pulsa <strong style="color:var(--accent3)">Compartir</strong> <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> y luego <strong style="color:var(--accent3)">"Añadir a pantalla de inicio"</strong></div>
+      <button onclick="this.parentElement.remove();localStorage.setItem('tv3_ios_tip','1')" style="margin-top:12px;background:var(--bg4);border:none;color:var(--text2);padding:6px 18px;border-radius:8px;cursor:pointer;font-size:12px">Entendido</button>\`;
+    document.body.appendChild(tip);
+    setTimeout(() => { if(tip.parentElement) tip.remove(); localStorage.setItem('tv3_ios_tip','1') }, 12000);
+  }
+}
+
+// Mobile sidebar
+function toggleSidebar() {
+  document.querySelector('.sidebar').classList.toggle('open');
+  document.getElementById('mob-overlay').classList.toggle('open');
+}
+function closeSidebar() {
+  document.querySelector('.sidebar').classList.remove('open');
+  document.getElementById('mob-overlay').classList.remove('open');
+}
+// Close sidebar on nav
+const origGoTo = goTo;
+
+document.addEventListener('DOMContentLoaded',()=>{
+  initData();
+  renderDash();
+  updateCount();
+  document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open')}));
+  
+registerSW();
+showiOSTip();
+
+});
+</script>
+
+<div id="pwa-banner" style="display:none;position:fixed;bottom:max(20px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:12px 18px;z-index:2000;box-shadow:0 8px 32px rgba(0,0,0,.6);display:flex;align-items:center;gap:12px;max-width:340px;width:90vw">
+  <span style="font-size:24px">🎟️</span>
+  <div style="flex:1">
+    <div style="font-weight:600;font-size:13px">Instalar TicketVault</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:1px">Añadir a pantalla de inicio</div>
+  </div>
+  <button onclick="installPWA()" class="btn btn-primary btn-sm">Instalar</button>
+  <button onclick="document.getElementById('pwa-banner').style.display='none'" style="background:none;border:none;color:var(--text3);cursor:pointer;padding:4px">✕</button>
+</div>
+
+</body>
+</html>
