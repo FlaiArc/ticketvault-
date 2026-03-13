@@ -1,0 +1,1747 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TicketVault">
+<meta name="theme-color" content="#0a0a0f">
+<title>TicketVault</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ── RESET ── */
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:#0a0a0f}
+
+/* ── TOKENS ── */
+:root{
+  --bg:#0a0a0f;--bg2:#111118;--bg3:#1a1a24;--bg4:#22222f;
+  --border:rgba(255,255,255,.07);--border2:rgba(255,255,255,.13);
+  --accent:#c8ff00;--cyan:#06b6d4;--green:#22c55e;--red:#ef4444;--yellow:#eab308;
+  --text:#f0f0f8;--text2:#8888aa;--text3:#4a4a6a;
+  --r:12px;--r2:8px;
+  /* iPhone safe areas */
+  --sat:env(safe-area-inset-top,59px);
+  --sab:env(safe-area-inset-bottom,34px);
+  --sal:env(safe-area-inset-left,0px);
+  --sar:env(safe-area-inset-right,0px);
+}
+
+/* ── TYPOGRAPHY ── */
+.font-syne{font-family:'Syne',sans-serif}
+.font-mono{font-family:'DM Mono',monospace}
+
+/* ── LAYOUT ── */
+#app{
+  display:flex;
+  width:100vw;
+  height:100vh;
+  background:var(--bg);
+  color:var(--text);
+  font-family:'DM Sans',sans-serif;
+  font-size:14px;
+  overflow:hidden;
+}
+
+/* ══════════════════════════════════
+   SIDEBAR — desktop only
+══════════════════════════════════ */
+#sidebar{
+  width:220px;
+  flex-shrink:0;
+  background:var(--bg2);
+  border-right:1px solid var(--border);
+  display:flex;
+  flex-direction:column;
+  overflow-y:auto;
+  transition:transform .3s cubic-bezier(.4,0,.2,1);
+  z-index:300;
+}
+.sidebar-logo{
+  padding:22px 20px 16px;
+  border-bottom:1px solid var(--border);
+}
+.sidebar-logo-mark{font-family:'Syne',sans-serif;font-weight:800;font-size:18px;color:var(--accent)}
+.sidebar-logo-sub{font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:2px;text-transform:uppercase;margin-top:2px}
+.sidebar-nav{padding:14px 12px;flex:1}
+.nav-section{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);padding:0 8px;margin:14px 0 5px}
+.nav-section:first-child{margin-top:0}
+.nav-item{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 10px;border-radius:var(--r2);
+  cursor:pointer;color:var(--text2);font-size:13px;
+  transition:all .15s;margin-bottom:2px;
+  border:1px solid transparent;user-select:none;
+  min-height:44px;
+}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:rgba(200,255,0,.08);color:var(--accent);border-color:rgba(200,255,0,.15)}
+.nav-item svg{width:15px;height:15px;flex-shrink:0}
+.sidebar-footer{padding:12px 20px;border-top:1px solid var(--border);font-family:'DM Mono',monospace;font-size:9px;color:var(--text3)}
+
+/* ══════════════════════════════════
+   MOBILE DRAWER
+══════════════════════════════════ */
+#mob-overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,.65);z-index:299;
+}
+#mob-overlay.open{display:block}
+#mob-hamburger{
+  display:none;
+  position:fixed;
+  top:calc(var(--sat) + 10px);
+  left:14px;
+  z-index:400;
+  width:40px;height:40px;
+  background:var(--bg2);
+  border:1px solid var(--border2);
+  border-radius:10px;
+  cursor:pointer;
+  align-items:center;justify-content:center;
+  color:var(--text2);
+}
+
+/* ══════════════════════════════════
+   MAIN CONTENT
+══════════════════════════════════ */
+#main{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  min-width:0;
+}
+
+/* topbar */
+.topbar{
+  padding:14px 24px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--bg);
+  flex-shrink:0;
+  gap:10px;
+}
+.topbar-left{min-width:0}
+.topbar-title{font-family:'Syne',sans-serif;font-weight:700;font-size:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar-sub{font-size:11px;color:var(--text3);margin-top:1px}
+.topbar-actions{display:flex;gap:8px;flex-shrink:0}
+
+/* scrollable page body */
+.page-body{
+  flex:1;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  padding:20px 24px 20px;
+}
+.page-body.p0{padding:0}
+/* En móvil el último hijo tiene padding-bottom para no quedar bajo la barra */
+@media (max-width:640px){
+  .page-body{ padding-bottom: calc(var(--sab) + 80px) !important; }
+  .page-body.p0 > *:last-child{ padding-bottom: calc(var(--sab) + 80px); }
+  #dash-body{ padding-bottom: calc(var(--sab) + 80px) !important; }
+}
+
+/* ══════════════════════════════════
+   BOTTOM NAV — mobile only
+══════════════════════════════════ */
+#bottom-nav{
+  display:none;
+  background:var(--bg2);
+  border-top:1px solid var(--border);
+  flex-shrink:0;
+  /* Cubre toda la zona inferior incluyendo el home indicator */
+  padding-bottom:var(--sab);
+  position:relative;
+}
+#bottom-nav::after{
+  content:'';
+  position:absolute;
+  bottom:calc(-1 * var(--sab));
+  left:0;right:0;
+  height:var(--sab);
+  background:var(--bg2);
+}
+.bnav-inner{
+  display:flex;
+  align-items:stretch;
+}
+.bnav-item{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:10px 4px 8px;
+  cursor:pointer;color:var(--text3);font-size:9px;font-family:'DM Mono',monospace;
+  letter-spacing:.5px;text-transform:uppercase;gap:4px;
+  min-height:54px;
+  transition:color .15s;
+  border:none;background:none;
+}
+.bnav-item svg{width:20px;height:20px}
+.bnav-item.active{color:var(--accent)}
+
+/* ══════════════════════════════════
+   SECTIONS
+══════════════════════════════════ */
+.section{display:none}
+.section.active{display:flex;flex-direction:column;flex:1;overflow:hidden;min-height:0}
+
+/* ══════════════════════════════════
+   COMPONENTS
+══════════════════════════════════ */
+
+/* Buttons */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  padding:0 16px;height:40px;
+  border-radius:var(--r2);font-size:13px;font-weight:500;
+  cursor:pointer;border:none;transition:all .15s;
+  font-family:'DM Sans',sans-serif;white-space:nowrap;
+  -webkit-tap-highlight-color:transparent;
+}
+.btn-primary{background:var(--accent);color:#0a0a0f}
+.btn-primary:active{background:#b8ef00;transform:scale(.97)}
+.btn-ghost{background:transparent;border:1px solid var(--border2);color:var(--text2)}
+.btn-ghost:active{background:var(--bg3)}
+.btn-danger{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:var(--red)}
+.btn-danger:active{background:rgba(239,68,68,.2)}
+.btn-sm{height:34px;padding:0 12px;font-size:12px}
+.btn-icon{width:40px;padding:0}
+
+/* KPI Cards */
+.kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:16px}
+.kpi-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:16px;position:relative;overflow:hidden}
+.kpi-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.kc-green::after{background:var(--green)}.kc-red::after{background:var(--red)}
+.kc-accent::after{background:var(--accent)}.kc-cyan::after{background:var(--cyan)}
+.kpi-lbl{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:6px}
+.kpi-val{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;line-height:1}
+.kv-green{color:var(--green)}.kv-red{color:var(--red)}.kv-accent{color:var(--accent)}.kv-cyan{color:var(--cyan)}
+.kpi-sub{font-size:10px;color:var(--text3);margin-top:4px}
+
+/* Card */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:14px}
+.card-header{padding:13px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-family:'Syne',sans-serif;font-weight:600;font-size:13px}
+
+/* Concert row */
+.cc{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 16px;border-bottom:1px solid var(--border);
+  cursor:pointer;transition:background .12s;
+  min-height:60px;
+}
+.cc:last-child{border-bottom:none}
+.cc:active{background:var(--bg3)}
+.cc-av{
+  width:38px;height:38px;border-radius:9px;
+  background:var(--bg4);display:flex;align-items:center;justify-content:center;
+  font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--accent);flex-shrink:0;
+}
+.cc-body{flex:1;min-width:0}
+.cc-name{font-weight:600;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cc-meta{font-size:11px;color:var(--text3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cc-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+.cc-stat{font-family:'Syne',sans-serif;font-weight:600;font-size:14px}
+.cc-slbl{font-size:9px;color:var(--text3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.8px}
+
+/* Badges */
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-family:'DM Mono',monospace;font-weight:500}
+.bg-green{background:rgba(34,197,94,.12);color:var(--green)}
+.bg-yellow{background:rgba(234,179,8,.12);color:var(--yellow)}
+.bg-cyan{background:rgba(6,182,212,.12);color:var(--cyan)}
+.bg-gray{background:var(--bg4);color:var(--text2)}
+.tag{display:inline-flex;padding:1px 7px;border-radius:4px;font-size:11px;background:var(--bg4);color:var(--text2);font-family:'DM Mono',monospace;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Profit */
+.pp{color:var(--green);font-weight:600}.pn{color:var(--red);font-weight:600}.pz{color:var(--text3)}
+
+/* Tables */
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;min-width:500px}
+thead tr{border-bottom:1px solid var(--border)}
+th{text-align:left;padding:8px 10px;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1.2px;text-transform:uppercase;color:var(--text3);white-space:nowrap;font-weight:400}
+tbody tr{border-bottom:1px solid var(--border);transition:background .1s}
+tbody tr:active{background:var(--bg3)}
+tbody tr:last-child{border-bottom:none}
+td{padding:9px 10px;font-size:12px;vertical-align:middle;white-space:nowrap}
+
+/* Search / filters toolbar */
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
+.search-wrap{position:relative;flex:1;min-width:160px}
+.search-wrap svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:13px;height:13px;color:var(--text3)}
+.search-wrap input{padding-left:32px}
+.yr-tabs{display:flex;gap:2px;background:var(--bg3);padding:3px;border-radius:var(--r2)}
+.yr-tab{padding:4px 12px;border-radius:6px;cursor:pointer;font-size:11px;color:var(--text2);font-family:'DM Mono',monospace;transition:all .15s;user-select:none;min-height:30px;display:flex;align-items:center}
+.yr-tab.active{background:var(--bg4);color:var(--accent)}
+
+/* Inputs */
+input,select,textarea{
+  background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r2);
+  color:var(--text);padding:10px 12px;
+  font-size:16px; /* prevent iOS zoom */
+  font-family:'DM Sans',sans-serif;width:100%;
+  transition:border-color .15s;outline:none;
+  -webkit-appearance:none;
+}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+select option{background:var(--bg3)}
+textarea{resize:vertical;min-height:60px;font-size:14px}
+
+/* Form grid */
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field{display:flex;flex-direction:column;gap:5px}
+.s2{grid-column:span 2}
+label{font-size:11px;font-family:'DM Mono',monospace;letter-spacing:.7px;text-transform:uppercase;color:var(--text2)}
+.field-hint{font-size:10px;color:var(--text3);margin-top:2px}
+
+/* ══════════════════════════════════
+   MODAL — bottom sheet on mobile
+══════════════════════════════════ */
+.modal-overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,.75);backdrop-filter:blur(4px);
+  z-index:500;align-items:flex-end;justify-content:center;
+}
+.modal-overlay.open{display:flex}
+.modal{
+  background:var(--bg2);
+  border:1px solid var(--border2);
+  border-radius:20px 20px 0 0;
+  width:100%;max-width:600px;
+  max-height:90vh;
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
+  animation:sheetUp .25s cubic-bezier(.4,0,.2,1);
+  padding-bottom:var(--sab);
+}
+@keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:12px auto 0}
+.modal-header{padding:14px 20px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-family:'Syne',sans-serif;font-weight:700;font-size:15px}
+.modal-body{padding:16px 20px}
+.modal-footer{padding:12px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
+.xbtn{background:none;border:none;cursor:pointer;color:var(--text3);padding:4px;border-radius:6px;display:flex;align-items:center;justify-content:center;min-width:32px;min-height:32px}
+.xbtn:active{background:var(--bg4);color:var(--text)}
+
+/* ══════════════════════════════════
+   DETAIL INFO BLOCKS
+══════════════════════════════════ */
+.dg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.db{background:var(--bg3);border-radius:var(--r2);padding:10px 12px}
+.dl{font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px}
+.dv{font-size:12.5px;font-weight:500;word-break:break-all}
+.map-box{width:100%;height:220px;border-radius:var(--r2);overflow:hidden;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:12px;text-align:center}
+.map-box iframe{width:100%;height:100%;border:none}
+
+/* Finance rows */
+.frow{display:flex;justify-content:space-between;font-size:12.5px;padding:4px 0}
+.frow-lbl{color:var(--text3)}
+.frow-val{font-weight:600}
+
+/* Calendar */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cal-head{text-align:center;padding:4px 0;font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase}
+.cal-day{min-height:32px;border-radius:6px;padding:3px;cursor:default}
+.cal-day.other-m{opacity:.25}
+.cal-day.today{border:1px solid var(--border2)}
+.cal-dn{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace}
+.cal-ev{background:rgba(200,255,0,.1);border-radius:3px;padding:1px 4px;font-size:9px;color:var(--accent);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;border-left:2px solid var(--accent)}
+.cal-nav{display:flex;align-items:center;gap:8px}
+.cal-nav button{background:var(--bg3);border:1px solid var(--border2);color:var(--text2);width:28px;height:28px;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.cal-month-lbl{font-family:'Syne',sans-serif;font-weight:600;font-size:13px;min-width:130px;text-align:center}
+
+/* Venue suggestion */
+.vs-box{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r2);padding:10px 12px;margin-top:6px;display:none}
+.vs-box.show{display:block}
+
+/* Empty state */
+.empty{text-align:center;padding:40px 20px;color:var(--text3);font-size:13px}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:2px}
+
+/* ══════════════════════════════════
+   RESPONSIVE — MOBILE
+══════════════════════════════════ */
+@media (max-width: 640px) {
+  #sidebar{
+    position:fixed;top:0;left:0;bottom:0;
+    transform:translateX(-100%);
+    padding-top:var(--sat);
+    padding-bottom:var(--sab);
+    z-index:300;
+  }
+  #sidebar.open{transform:translateX(0);box-shadow:8px 0 40px rgba(0,0,0,.8)}
+  #mob-hamburger{display:flex}
+  #bottom-nav{display:block}
+  .topbar{
+    padding-top:calc(var(--sat) + 10px);
+    padding-left:60px;
+    padding-right:14px;
+    padding-bottom:12px;
+  }
+  .page-body{padding:14px}
+  .kpi-grid{gap:10px}
+  .kpi-val{font-size:19px}
+  .topbar-title{font-size:15px}
+  /* Stack dashboard grids */
+  .dash-grid{flex-direction:column!important}
+  .dash-grid > *{width:100%!important}
+  /* Detail layout */
+  .detail-cols{flex-direction:column!important}
+  .fg{grid-template-columns:1fr}
+  .fg .s2{grid-column:span 1}
+  .modal{border-radius:20px 20px 0 0}
+  table{min-width:480px;font-size:11px}
+  th,td{padding:7px 8px}
+}
+@media (min-width: 641px) {
+  #mob-hamburger{display:none!important}
+  #bottom-nav{display:none!important}
+  .kpi-grid{grid-template-columns:repeat(4,1fr)}
+  .modal{border-radius:16px;align-self:center;max-height:88vh}
+  .modal-overlay{align-items:center}
+  .modal-handle{display:none}
+}
+</style>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+<div id="app">
+
+<!-- ── MOBILE overlay ── -->
+<div id="mob-overlay" onclick="closeSidebar()"></div>
+<button id="mob-hamburger" onclick="toggleSidebar()" aria-label="Menú">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+    <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+  </svg>
+</button>
+
+<!-- ── SIDEBAR ── -->
+<aside id="sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-logo-mark">TicketVault</div>
+    <div class="sidebar-logo-sub">Gestión de entradas</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">Principal</div>
+    <div class="nav-item active" onclick="goTo('dashboard')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </div>
+    <div class="nav-section">Catálogo</div>
+    <div class="nav-item" onclick="goTo('conciertos')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+      Conciertos
+    </div>
+    <div class="nav-item" onclick="goTo('stock')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 9a1 1 0 0 1 1-1h18a1 1 0 0 1 1 1v2a2 2 0 0 0 0 4v2a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-2a2 2 0 0 0 0-4V9z"/></svg>
+      Stock
+    </div>
+    <div class="nav-section">Finanzas</div>
+    <div class="nav-item" onclick="goTo('ventas')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      Ventas
+    </div>
+    <div class="nav-item" onclick="goTo('resultados')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Resultados
+    </div>
+  </nav>
+  <div class="sidebar-footer" style="display:flex;flex-direction:column;gap:8px">
+  <div>v4.0 · <span id="sb-count">—</span> entradas</div>
+  <div style="display:flex;gap:6px;margin-bottom:4px"><button onclick="openModal('mcsv')" class="btn btn-ghost btn-sm" style="width:100%;font-size:10px">⇅ CSV</button></div>
+  <div style="display:flex;gap:6px">
+    <button onclick="syncDown()" class="btn btn-ghost btn-sm" style="flex:1;font-size:10px" id="btn-sync-down">↓ Bajar</button>
+    <button onclick="syncUp()" class="btn btn-primary btn-sm" style="flex:1;font-size:10px" id="btn-sync-up">↑ Subir</button>
+  </div>
+  <div id="sync-status" style="font-size:9px;color:var(--text3);text-align:center;min-height:12px"></div>
+</div>
+</aside>
+
+<!-- ── MAIN ── -->
+<div id="main">
+
+<!-- DASHBOARD -->
+<div class="section active" id="sec-dashboard">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-title">Dashboard</div>
+      <div class="topbar-sub" id="dash-sub">Todos los años</div>
+    </div>
+    <div class="topbar-actions">
+      <div class="yr-tabs" id="dash-yr">
+        <div class="yr-tab active" onclick="setYr('dash','all',this)">Todos</div>
+        <div class="yr-tab" onclick="setYr('dash','2024',this)">2024</div>
+        <div class="yr-tab" onclick="setYr('dash','2025',this)">2025</div>
+        <div class="yr-tab" onclick="setYr('dash','2026',this)">2026</div>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="openModal('mc')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <span class="hide-xs">Concierto</span>
+      </button>
+    </div>
+  </div>
+  <div class="page-body" id="dash-body">
+    <div class="kpi-grid" id="kpis"></div>
+    <!-- Calendar -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Calendario</span>
+        <div class="cal-nav">
+          <button onclick="calPrev()"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg></button>
+          <span class="cal-month-lbl" id="cal-lbl"></span>
+          <button onclick="calNext()"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></button>
+        </div>
+      </div>
+      <div style="padding:10px 12px">
+        <div class="cal-grid" id="cal-heads"></div>
+        <div class="cal-grid" id="cal-days" style="margin-top:3px"></div>
+      </div>
+    </div>
+    <!-- Próximos -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title" id="dash-concerts-title">Próximos conciertos</span>
+        <button class="btn btn-ghost btn-sm" onclick="goTo('conciertos')">Ver todos</button>
+      </div>
+      <div id="dash-concerts"></div>
+    </div>
+    <!-- Últimas ventas -->
+    <div class="card">
+      <div class="card-header"><span class="card-title">Últimas ventas</span></div>
+      <div id="dash-sales"></div>
+    </div>
+  </div>
+</div>
+
+<!-- CONCIERTOS -->
+<div class="section" id="sec-conciertos">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-title">Conciertos</div>
+      <div class="topbar-sub" id="concerts-sub"></div>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn btn-primary btn-sm" onclick="openModal('mc')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Nuevo
+      </button>
+    </div>
+  </div>
+  <div class="toolbar">
+    <div class="search-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="search" id="sc" placeholder="Artista, ciudad..." oninput="renderConcerts()">
+    </div>
+    <div class="yr-tabs" id="concert-yr">
+      <div class="yr-tab active" onclick="setYr('concert','all',this)">Todos</div>
+      <div class="yr-tab" onclick="setYr('concert','2024',this)">2024</div>
+      <div class="yr-tab" onclick="setYr('concert','2025',this)">2025</div>
+      <div class="yr-tab" onclick="setYr('concert','2026',this)">2026</div>
+    </div>
+  </div>
+  <div class="page-body p0" style="overflow-y:auto">
+    <div id="concerts-list"></div>
+  </div>
+</div>
+
+<!-- DETALLE CONCIERTO -->
+<div class="section" id="sec-detail">
+  <div class="topbar">
+    <div class="topbar-left" style="display:flex;align-items:center;gap:10px">
+      <button class="btn btn-ghost btn-sm btn-icon" onclick="goTo('conciertos')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div>
+        <div class="topbar-title" id="det-title"></div>
+        <div class="topbar-sub" id="det-sub"></div>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn btn-ghost btn-sm" onclick="editCurConcert()">Editar</button>
+      <button class="btn btn-primary btn-sm" onclick="openAddTickets()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Añadir
+      </button>
+    </div>
+  </div>
+  <div class="page-body">
+    <div class="detail-cols" style="display:flex;gap:16px">
+      <div style="flex:1.3;min-width:0">
+        <div class="dg" id="det-info"></div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Entradas</span></div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>Pedido</th><th>Secc.</th><th>Fila</th><th>Asiento</th><th>Web</th><th>Email</th><th>Compra</th><th>Estado</th><th>Venta</th><th>Benef.</th><th></th></tr></thead>
+            <tbody id="det-tickets"></tbody>
+          </table></div>
+        </div>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div class="card">
+          <div class="card-header"><span class="card-title">Mapa</span><button class="btn btn-ghost btn-sm" onclick="editCurConcert()">Editar URL</button></div>
+          <div style="padding:10px"><div class="map-box" id="det-map"></div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Financiero</span></div>
+          <div id="det-finance" style="padding:14px"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STOCK -->
+<div class="section" id="sec-stock">
+  <div class="topbar">
+    <div class="topbar-left"><div class="topbar-title">Stock</div><div class="topbar-sub">Todas las entradas</div></div>
+  </div>
+  <div class="toolbar">
+    <div class="search-wrap" style="min-width:120px">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="search" id="st" placeholder="Buscar..." oninput="renderStock()">
+    </div>
+    <select id="ft-c" onchange="renderStock()" style="width:140px;font-size:13px;padding:6px 10px"><option value="">Todos</option></select>
+    <select id="ft-e" onchange="renderStock()" style="width:120px;font-size:13px;padding:6px 10px">
+      <option value="">Todos</option><option value="disponible">Disponible</option><option value="reservada">Reservada</option><option value="vendida">Vendida</option>
+    </select>
+    <div class="yr-tabs" id="stock-yr">
+      <div class="yr-tab active" onclick="setYr('stock','all',this)">Todos</div>
+      <div class="yr-tab" onclick="setYr('stock','2024',this)">2024</div>
+      <div class="yr-tab" onclick="setYr('stock','2025',this)">2025</div>
+      <div class="yr-tab" onclick="setYr('stock','2026',this)">2026</div>
+    </div>
+  </div>
+  <div class="page-body p0" style="overflow-y:auto">
+    <div class="tbl-wrap" style="padding:0 0 20px"><table>
+      <thead><tr><th>Concierto</th><th>Ciudad</th><th>Fecha</th><th>Secc.</th><th>Fila</th><th>Asiento</th><th>Web</th><th>Pedido</th><th>Email</th><th>Compra</th><th>Estado</th><th>Venta</th><th>Tienda</th><th>Benef.</th><th></th></tr></thead>
+      <tbody id="stock-tbody"></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- VENTAS -->
+<div class="section" id="sec-ventas">
+  <div class="topbar">
+    <div class="topbar-left"><div class="topbar-title">Ventas</div><div class="topbar-sub">Historial</div></div>
+  </div>
+  <div class="toolbar">
+    <div class="search-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="search" id="sv" placeholder="Buscar..." oninput="renderVentas()">
+    </div>
+    <div class="yr-tabs" id="ventas-yr">
+      <div class="yr-tab active" onclick="setYr('ventas','all',this)">Todos</div>
+      <div class="yr-tab" onclick="setYr('ventas','2024',this)">2024</div>
+      <div class="yr-tab" onclick="setYr('ventas','2025',this)">2025</div>
+      <div class="yr-tab" onclick="setYr('ventas','2026',this)">2026</div>
+    </div>
+  </div>
+  <div class="page-body p0" style="overflow-y:auto">
+    <div class="tbl-wrap" style="padding:0 0 20px"><table>
+      <thead><tr><th>F.Venta</th><th>Concierto</th><th>Ciudad</th><th>Secc/Fila/Asiento</th><th>Compra</th><th>Venta</th><th>Tienda</th><th>Pedido venta</th><th>Benef.</th><th>Margen</th></tr></thead>
+      <tbody id="ventas-tbody"></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- RESULTADOS -->
+<div class="section" id="sec-resultados">
+  <div class="topbar">
+    <div class="topbar-left"><div class="topbar-title">Resultados P&L</div><div class="topbar-sub">Por concierto</div></div>
+  </div>
+  <div class="toolbar">
+    <div class="yr-tabs" id="res-yr">
+      <div class="yr-tab active" onclick="setYr('res','all',this)">Todos</div>
+      <div class="yr-tab" onclick="setYr('res','2024',this)">2024</div>
+      <div class="yr-tab" onclick="setYr('res','2025',this)">2025</div>
+      <div class="yr-tab" onclick="setYr('res','2026',this)">2026</div>
+    </div>
+  </div>
+  <div class="page-body p0" style="overflow-y:auto">
+    <div class="tbl-wrap" style="padding:0 0 20px"><table>
+      <thead><tr><th>Concierto</th><th>Ciudad</th><th>Fecha</th><th>Compradas</th><th>Vendidas</th><th>Disponibles</th><th>Invertido</th><th>Ingresado</th><th>Beneficio</th><th>ROI</th></tr></thead>
+      <tbody id="res-tbody"></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav id="bottom-nav">
+  <div class="bnav-inner">
+    <button class="bnav-item active" onclick="goTo('dashboard')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Inicio
+    </button>
+    <button class="bnav-item" onclick="goTo('conciertos')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+      Conciertos
+    </button>
+    <button class="bnav-item" onclick="goTo('stock')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 9a1 1 0 0 1 1-1h18a1 1 0 0 1 1 1v2a2 2 0 0 0 0 4v2a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-2a2 2 0 0 0 0-4V9z"/></svg>
+      Stock
+    </button>
+    <button class="bnav-item" onclick="goTo('ventas')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      Ventas
+    </button>
+    <button class="bnav-item" onclick="syncUp()" id="bnav-sync">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+      Sync
+    </button>
+    <button class="bnav-item" onclick="goTo('resultados')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      P&L
+    </button>
+  </div>
+</nav>
+
+</div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ══ MODAL CONCIERTO ══ -->
+<div class="modal-overlay" id="mc-overlay">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <span class="modal-title" id="mc-title">Nuevo concierto</span>
+      <button class="xbtn" onclick="closeModal('mc-overlay')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="fg">
+        <div class="field s2"><label>Artista</label><input type="text" id="c-art" placeholder="Bad Bunny, Rosalía..." oninput="onCChange()"></div>
+        <div class="field"><label>Ciudad</label><input type="text" id="c-ciu" placeholder="Barcelona..." oninput="onCChange()"></div>
+        <div class="field"><label>Fecha evento</label><input type="date" id="c-fec"></div>
+        <div class="field s2 vs-box" id="vs-box">
+          <label>Recinto encontrado</label>
+          <div id="vs-txt" style="color:var(--cyan);font-size:12px;padding:4px 0"></div>
+          <div style="display:flex;gap:8px;margin-top:6px">
+            <button class="btn btn-ghost btn-sm" onclick="acceptVenue()">✓ Usar</button>
+            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('vs-box').classList.remove('show')">Ignorar</button>
+          </div>
+        </div>
+        <div class="field s2"><label>Recinto</label><input type="text" id="c-rec" placeholder="Palau Sant Jordi..."></div>
+        <div class="field s2">
+          <label>URL Mapa (Google Maps embed)</label>
+          <input type="text" id="c-map" placeholder="https://maps.google.com/maps?q=...&output=embed">
+          <span class="field-hint">Google Maps → Compartir → Incorporar mapa → copia el src</span>
+        </div>
+        <div class="field s2"><label>Notas</label><textarea id="c-not"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('mc-overlay')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveConcert()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL ENTRADAS ══ -->
+<div class="modal-overlay" id="mt-overlay">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <span class="modal-title">Añadir entradas</span>
+      <button class="xbtn" onclick="closeModal('mt-overlay')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:11.5px;color:var(--text3);margin-bottom:14px;padding:8px 10px;background:var(--bg3);border-radius:var(--r2)">Datos de compra — aplican a todas las entradas del lote</p>
+      <div class="fg" style="margin-bottom:14px">
+        <div class="field"><label>Web de compra</label><input type="text" id="t-web" placeholder="Ticketmaster..."></div>
+        <div class="field"><label>Nº pedido compra</label><input type="text" id="t-ped"></div>
+        <div class="field s2"><label>Email cuenta</label><input type="email" id="t-eml" placeholder="tu@email.com"></div>
+        <div class="field"><label>Fecha compra</label><input type="date" id="t-fco"></div>
+        <div class="field"><label>Sección / Zona</label><input type="text" id="t-sec" placeholder="Gold Circle..."></div>
+        <div class="field"><label>Fila</label><input type="text" id="t-fil"></div>
+        <div class="field"><label>Precio total (€)</label><input type="number" id="t-pre" placeholder="0.00" step="0.01" min="0"></div>
+        <div class="field"><label>Cantidad</label><input type="number" id="t-qty" value="1" min="1" max="50" oninput="genLote()"></div>
+      </div>
+      <div id="lote-rows"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('mt-overlay')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveTickets()">Añadir</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL VENTA ══ -->
+<div class="modal-overlay" id="mv-overlay">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <span class="modal-title">Registrar venta</span>
+      <button class="xbtn" onclick="closeModal('mv-overlay')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="v-id">
+      <div id="v-info" style="margin-bottom:14px"></div>
+      <div class="fg">
+        <div class="field"><label>Precio venta (€)</label><input type="number" id="v-pre" placeholder="0.00" step="0.01" min="0" oninput="calcVProfit()"></div>
+        <div class="field"><label>Fecha venta</label><input type="date" id="v-fec"></div>
+        <div class="field"><label>Sitio de venta</label><input type="text" id="v-tda" placeholder="Viagogo, Stubhub..."></div>
+        <div class="field"><label>Nº pedido venta</label><input type="text" id="v-ped"></div>
+        <div class="field s2"><label>Beneficio estimado</label><div id="v-profit" style="padding:6px 0;font-size:16px;font-weight:600;color:var(--text3)">—</div></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('mv-overlay')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveVenta()">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+// ═══════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════
+const DB={
+  get:k=>{try{return JSON.parse(localStorage.getItem('tv4_'+k)||'[]')}catch{return[]}},
+  set:(k,v)=>{try{localStorage.setItem('tv4_'+k,JSON.stringify(v))}catch{}},
+  id:()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6)
+};
+const gc=()=>DB.get('concerts');
+const gt=()=>DB.get('tickets');
+const sc=d=>DB.set('concerts',d);
+const st=d=>DB.set('tickets',d);
+
+const IMPORT={"concerts":[],"tickets":[]};
+
+function initData(){
+  if(localStorage.getItem('tv4_ok')) return;
+  sc(IMPORT.concerts); st(IMPORT.tickets);
+  localStorage.setItem('tv4_ok','1');
+}
+
+// ═══════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════
+let CID=null; // current concert id
+let editCID=null;
+let venueData={};
+let vsTimer=null;
+const YR={dash:'all',concert:'all',stock:'all',ventas:'all',res:'all'};
+let calDate=new Date();
+
+// ═══════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════
+const PAGES={
+  dashboard:{sec:'sec-dashboard',navIdx:0,bnIdx:0,render:renderDash},
+  conciertos:{sec:'sec-conciertos',navIdx:1,bnIdx:1,render:renderConcerts},
+  detail:{sec:'sec-detail',navIdx:1,bnIdx:1,render:()=>renderDetail(CID)},
+  stock:{sec:'sec-stock',navIdx:2,bnIdx:2,render:()=>{renderStock();fillConcertSel()}},
+  ventas:{sec:'sec-ventas',navIdx:3,bnIdx:3,render:renderVentas},
+  resultados:{sec:'sec-resultados',navIdx:4,bnIdx:4,render:renderResultados},
+};
+
+function goTo(page){
+  // hide all sections
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  // activate
+  const p=PAGES[page];
+  document.getElementById(p.sec).classList.add('active');
+  // sidebar nav
+  document.querySelectorAll('.nav-item').forEach((n,i)=>n.classList.toggle('active',i===p.navIdx));
+  // bottom nav
+  document.querySelectorAll('.bnav-item').forEach((n,i)=>n.classList.toggle('active',i===p.bnIdx));
+  // close mobile sidebar
+  closeSidebar();
+  // render
+  p.render();
+}
+
+function goDetail(id){
+  CID=id;
+  goTo('detail');
+}
+
+// ═══════════════════════════════════════════════════
+// SIDEBAR MOBILE
+// ═══════════════════════════════════════════════════
+function toggleSidebar(){
+  const sb=document.getElementById('sidebar');
+  const ov=document.getElementById('mob-overlay');
+  const open=sb.classList.toggle('open');
+  ov.classList.toggle('open',open);
+}
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('mob-overlay').classList.remove('open');
+}
+
+// ═══════════════════════════════════════════════════
+// MODALS
+// ═══════════════════════════════════════════════════
+function openModal(id){document.getElementById(id+'-overlay').classList.add('open')}
+function closeModal(overlayId){document.getElementById(overlayId).classList.remove('open')}
+
+function openModal_c(){
+  document.getElementById('mc-overlay').classList.add('open');
+}
+
+// ═══════════════════════════════════════════════════
+// YEAR FILTER
+// ═══════════════════════════════════════════════════
+function setYr(key,val,el){
+  YR[key]=val;
+  const tabsId=key+'-yr';
+  document.querySelectorAll('#'+tabsId+' .yr-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  if(key==='dash') renderDash();
+  if(key==='concert') renderConcerts();
+  if(key==='stock') renderStock();
+  if(key==='ventas') renderVentas();
+  if(key==='res') renderResultados();
+}
+const yrOk=(f,yr)=>yr==='all'||(f||'').startsWith(yr);
+
+// ═══════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════
+const r2=n=>Math.round(n*100)/100;
+const fmt=n=>(n||0).toLocaleString('es-ES',{style:'currency',currency:'EUR',minimumFractionDigits:2});
+const fd=d=>{if(!d)return'—';try{return new Date(d+'T12:00:00').toLocaleDateString('es-ES',{day:'2-digit',month:'short',year:'numeric'})}catch{return d}};
+const pc=v=>v>0?'pp':v<0?'pn':'pz';
+const trunc=(s,n)=>s&&s.length>n?s.slice(0,n)+'…':(s||'—');
+const badge=e=>{
+  if(e==='disponible')return`<span class="badge bg-green">Disp.</span>`;
+  if(e==='reservada') return`<span class="badge bg-yellow">Res.</span>`;
+  if(e==='vendida')   return`<span class="badge bg-cyan">Vend.</span>`;
+  return`<span class="badge bg-gray">${e}</span>`;
+};
+function updateCount(){
+  document.getElementById('sb-count').textContent=gt().length;
+}
+
+// ═══════════════════════════════════════════════════
+// CALENDAR
+// ═══════════════════════════════════════════════════
+const MONTHS=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const DAYS=['L','M','X','J','V','S','D'];
+function calPrev(){calDate=new Date(calDate.getFullYear(),calDate.getMonth()-1,1);renderCal()}
+function calNext(){calDate=new Date(calDate.getFullYear(),calDate.getMonth()+1,1);renderCal()}
+function renderCal(){
+  const y=calDate.getFullYear(),m=calDate.getMonth();
+  document.getElementById('cal-lbl').textContent=`${MONTHS[m]} ${y}`;
+  document.getElementById('cal-heads').innerHTML=DAYS.map(d=>`<div class="cal-head">${d}</div>`).join('');
+  let dow=new Date(y,m,1).getDay(); dow=dow===0?6:dow-1;
+  const dim=new Date(y,m+1,0).getDate();
+  const today=new Date();
+  const cmap={};
+  gc().forEach(c=>{if(c.fecha){const k=c.fecha.slice(0,10);if(!cmap[k])cmap[k]=[];cmap[k].push(c)}});
+  let html='';
+  for(let i=0;i<dow;i++) html+=`<div class="cal-day other-m"></div>`;
+  for(let d=1;d<=dim;d++){
+    const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isT=today.getFullYear()===y&&today.getMonth()===m&&today.getDate()===d;
+    const evts=cmap[ds]||[];
+    const ev=evts.map(c=>`<div class="cal-ev" onclick="goDetail('${c.id}')">${c.artista}</div>`).join('');
+    html+=`<div class="cal-day${isT?' today':''}"><span class="cal-dn">${d}</span>${ev}</div>`;
+  }
+  document.getElementById('cal-days').innerHTML=html;
+}
+
+// ═══════════════════════════════════════════════════
+// RENDER DASHBOARD
+// ═══════════════════════════════════════════════════
+function renderDash(){
+  const concerts=gc(), tickets=gt(), yr=YR.dash;
+  const cids=new Set(concerts.filter(c=>yrOk(c.fecha,yr)).map(c=>c.id));
+  const ts=tickets.filter(t=>cids.has(t.concertId));
+  const inv=ts.reduce((s,t)=>s+(t.precioCompra||0),0);
+  const vd=ts.filter(t=>t.estado==='vendida');
+  const ing=vd.reduce((s,t)=>s+(t.precioVenta||0),0);
+  const prof=ing-vd.reduce((s,t)=>s+(t.precioCompra||0),0);
+  const disp=ts.filter(t=>t.estado==='disponible').length;
+  document.getElementById('dash-sub').textContent=yr==='all'?'Todos los años':yr;
+  document.getElementById('kpis').innerHTML=`
+    <div class="kpi-card kc-cyan"><div class="kpi-lbl">Invertido</div><div class="kpi-val kv-cyan">${fmt(inv)}</div><div class="kpi-sub">${ts.length} entradas</div></div>
+    <div class="kpi-card kc-accent"><div class="kpi-lbl">Ingresado</div><div class="kpi-val kv-accent">${fmt(ing)}</div><div class="kpi-sub">${vd.length} vendidas</div></div>
+    <div class="kpi-card ${prof>=0?'kc-green':'kc-red'}"><div class="kpi-lbl">Beneficio</div><div class="kpi-val ${prof>=0?'kv-green':'kv-red'}">${prof>=0?'+':''}${fmt(prof)}</div><div class="kpi-sub">Neto</div></div>
+    <div class="kpi-card kc-accent"><div class="kpi-lbl">Disponible</div><div class="kpi-val" style="color:var(--text)">${disp}</div><div class="kpi-sub">${concerts.filter(c=>yrOk(c.fecha,yr)).length} conciertos</div></div>
+  `;
+  renderCal();
+  // Próximos
+  const now=new Date().toISOString().slice(0,10);
+  const upcoming=concerts.filter(c=>yrOk(c.fecha,yr)&&(c.fecha||'')>=now).sort((a,b)=>(a.fecha||'')>(b.fecha||'')?1:-1).slice(0,6);
+  document.getElementById('dash-concerts-title').textContent=yr==='all'?'Próximos conciertos':`Conciertos ${yr}`;
+  document.getElementById('dash-concerts').innerHTML=upcoming.length===0?
+    `<div class="empty">Sin próximos conciertos</div>`:
+    upcoming.map(c=>{
+      const ct=tickets.filter(t=>t.concertId===c.id);
+      const cv=ct.filter(t=>t.estado==='vendida');
+      return ccHTML(c,ct,cv);
+    }).join('');
+  // Ventas
+  const sales=tickets.filter(t=>t.estado==='vendida'&&cids.has(t.concertId)).sort((a,b)=>(b.fechaVenta||'')>(a.fechaVenta||'')?1:-1).slice(0,8);
+  document.getElementById('dash-sales').innerHTML=sales.length===0?
+    `<div class="empty">Sin ventas aún</div>`:
+    sales.map(t=>{
+      const c=concerts.find(x=>x.id===t.concertId);
+      const p=(t.precioVenta||0)-t.precioCompra;
+      return`<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--border)">
+        <div><div style="font-weight:500;font-size:13px">${c?.artista||'—'}</div><div style="font-size:11px;color:var(--text3)">${t.seccion}${t.tiendaVenta?' · '+t.tiendaVenta:''} · ${fd(t.fechaVenta)}</div></div>
+        <span class="${pc(p)}">${p>=0?'+':''}${fmt(p)}</span>
+      </div>`;
+    }).join('');
+}
+
+// ═══════════════════════════════════════════════════
+// RENDER CONCIERTOS
+// ═══════════════════════════════════════════════════
+function ccHTML(c,ct,cv){
+  const p=cv.reduce((s,t)=>s+(t.precioVenta||0),0)-cv.reduce((s,t)=>s+(t.precioCompra||0),0);
+  return`<div class="cc" onclick="goDetail('${c.id}')">
+    <div class="cc-av">${(c.artista||'?')[0].toUpperCase()}</div>
+    <div class="cc-body">
+      <div class="cc-name">${c.artista}</div>
+      <div class="cc-meta">${[c.recinto,c.ciudad,fd(c.fecha)].filter(Boolean).join(' · ')}</div>
+    </div>
+    <div class="cc-right">
+      <span class="cc-stat">${ct.length} ent.</span>
+      <span class="cc-slbl ${pc(p)}">${p>=0?'+':''}${fmt(p)}</span>
+    </div>
+  </div>`;
+}
+
+function renderConcerts(){
+  const q=(document.getElementById('sc')?.value||'').toLowerCase();
+  const yr=YR.concert;
+  const tickets=gt();
+  const all=gc().filter(c=>yrOk(c.fecha,yr)&&(!q||[c.artista,c.ciudad,c.recinto].join(' ').toLowerCase().includes(q)));
+  document.getElementById('concerts-sub').textContent=`${all.length} conciertos`;
+  const el=document.getElementById('concerts-list');
+  if(!el) return;
+  if(all.length===0){el.innerHTML=`<div class="empty">No hay conciertos</div>`;return}
+  // Group by artista+ciudad
+  const groups={};
+  all.forEach(c=>{
+    const k=`${c.artista}__${(c.ciudad||'')}`;
+    if(!groups[k]) groups[k]=[];
+    groups[k].push(c);
+  });
+  el.innerHTML=Object.values(groups).map(grp=>{
+    grp.sort((a,b)=>(a.fecha||'')>(b.fecha||'')?1:-1);
+    if(grp.length===1){
+      const c=grp[0];
+      const ct=tickets.filter(t=>t.concertId===c.id);
+      const cv=ct.filter(t=>t.estado==='vendida');
+      return ccHTML(c,ct,cv);
+    }
+    const allTs=tickets.filter(t=>grp.some(c=>c.id===t.concertId));
+    const allV=allTs.filter(t=>t.estado==='vendida');
+    const p=allV.reduce((s,t)=>s+(t.precioVenta||0),0)-allV.reduce((s,t)=>s+(t.precioCompra||0),0);
+    return`<div style="border-bottom:1px solid var(--border)">
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--bg3)">
+        <div class="cc-av">${(grp[0].artista||'?')[0].toUpperCase()}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600;font-size:13.5px">${grp[0].artista}${grp[0].ciudad?' — '+grp[0].ciudad:''}</div>
+          <div style="font-size:11px;color:var(--text3)">${grp.length} fechas · ${allTs.length} entradas</div>
+        </div>
+        <span class="${pc(p)}" style="font-weight:600;font-size:13px">${p>=0?'+':''}${fmt(p)}</span>
+      </div>
+      ${grp.map(c=>{
+        const ct=tickets.filter(t=>t.concertId===c.id);
+        const cv=ct.filter(t=>t.estado==='vendida');
+        return`<div class="cc" style="padding-left:56px" onclick="goDetail('${c.id}')">
+          <div class="cc-body"><div class="cc-name" style="font-size:12.5px">${fd(c.fecha)}${c.recinto?' · '+c.recinto:''}</div></div>
+          <div class="cc-right"><span class="cc-stat">${ct.length}</span><span class="cc-slbl" style="color:var(--green)">${cv.length} vend.</span></div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════
+// RENDER DETAIL
+// ═══════════════════════════════════════════════════
+function renderDetail(id){
+  const c=gc().find(x=>x.id===id);
+  if(!c) return;
+  document.getElementById('det-title').textContent=c.artista;
+  document.getElementById('det-sub').textContent=[c.recinto,c.ciudad,fd(c.fecha)].filter(Boolean).join(' · ');
+  document.getElementById('det-info').innerHTML=[
+    {l:'Fecha',v:fd(c.fecha)},{l:'Recinto',v:c.recinto||'—'},{l:'Ciudad',v:c.ciudad||'—'},{l:'Notas',v:c.notas||'—'}
+  ].map(b=>`<div class="db"><div class="dl">${b.l}</div><div class="dv">${b.v}</div></div>`).join('');
+  const m=document.getElementById('det-map');
+  m.innerHTML=c.mapa?`<iframe src="${c.mapa}" allowfullscreen loading="lazy"></iframe>`:`<div style="padding:20px"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin:0 auto 8px;display:block;opacity:.3"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Añade la URL del mapa</div>`;
+  const tickets=gt().filter(t=>t.concertId===id);
+  document.getElementById('det-tickets').innerHTML=tickets.length===0?
+    `<tr><td colspan="11" class="empty">Sin entradas — pulsa Añadir</td></tr>`:
+    tickets.map(t=>{
+      const p=t.estado==='vendida'?(t.precioVenta||0)-t.precioCompra:null;
+      return`<tr>
+        <td><span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3)">${trunc(t.numeroPedidoCompra||t.lote,14)}</span></td>
+        <td>${t.seccion}</td><td>${t.fila}</td><td>${t.asiento}</td>
+        <td><span class="tag">${trunc(t.webCompra,10)}</span></td>
+        <td style="font-size:10px;color:var(--text3)">${trunc(t.emailCuenta,16)}</td>
+        <td>${fmt(t.precioCompra)}</td>
+        <td>${badge(t.estado)}</td>
+        <td>${t.precioVenta?fmt(t.precioVenta):'—'}</td>
+        <td>${p!==null?`<span class="${pc(p)}">${p>=0?'+':''}${fmt(p)}</span>`:'—'}</td>
+        <td><div style="display:flex;gap:4px">
+          ${t.estado!=='vendida'?`<button class="btn btn-primary btn-sm" onclick="openVenta('${t.id}')">Vender</button>`:''}
+          ${t.estado==='disponible'?`<button class="btn btn-ghost btn-sm" onclick="toggleRes('${t.id}')">Res.</button>`:''}
+          ${t.estado==='reservada'?`<button class="btn btn-ghost btn-sm" onclick="toggleRes('${t.id}')">Lib.</button>`:''}
+          <button class="btn btn-danger btn-sm" onclick="delTicket('${t.id}')">✕</button>
+        </div></td>
+      </tr>`;
+    }).join('');
+  const vd=tickets.filter(t=>t.estado==='vendida');
+  const inv=tickets.reduce((s,t)=>s+(t.precioCompra||0),0);
+  const ing=vd.reduce((s,t)=>s+(t.precioVenta||0),0);
+  const p=ing-vd.reduce((s,t)=>s+(t.precioCompra||0),0);
+  document.getElementById('det-finance').innerHTML=`
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div class="frow"><span class="frow-lbl">Invertido</span><span class="frow-val">${fmt(inv)}</span></div>
+      <div class="frow"><span class="frow-lbl">Ingresado</span><span class="frow-val" style="color:var(--accent)">${fmt(ing)}</span></div>
+      <div class="frow"><span class="frow-lbl">Beneficio</span><span class="frow-val ${pc(p)}">${p>=0?'+':''}${fmt(p)}</span></div>
+      <div style="height:1px;background:var(--border);margin:4px 0"></div>
+      <div class="frow"><span class="frow-lbl">Vendidas</span><span class="frow-val">${vd.length} / ${tickets.length}</span></div>
+      <div class="frow"><span class="frow-lbl">Disponibles</span><span class="frow-val">${tickets.filter(t=>t.estado==='disponible').length}</span></div>
+    </div>
+    <div style="margin-top:14px"><button class="btn btn-danger btn-sm" onclick="delConcert('${id}')">Eliminar concierto</button></div>`;
+}
+
+// ═══════════════════════════════════════════════════
+// RENDER STOCK
+// ═══════════════════════════════════════════════════
+function fillConcertSel(){
+  const sel=document.getElementById('ft-c');
+  if(!sel) return;
+  const cur=sel.value;
+  sel.innerHTML='<option value="">Todos</option>'+gc().map(c=>`<option value="${c.id}"${c.id===cur?' selected':''}>${c.artista} ${fd(c.fecha)}</option>`).join('');
+}
+function renderStock(){
+  const q=(document.getElementById('st')?.value||'').toLowerCase();
+  const fc=document.getElementById('ft-c')?.value||'';
+  const fe=document.getElementById('ft-e')?.value||'';
+  const concerts=gc();
+  const tickets=gt().filter(t=>{
+    const c=concerts.find(x=>x.id===t.concertId);
+    if(!yrOk(c?.fecha,YR.stock)) return false;
+    const txt=[c?.artista,c?.ciudad,t.seccion,t.fila,t.asiento,t.webCompra,t.emailCuenta].join(' ').toLowerCase();
+    return(!q||txt.includes(q))&&(!fc||t.concertId===fc)&&(!fe||t.estado===fe);
+  });
+  const tb=document.getElementById('stock-tbody');
+  if(!tb) return;
+  if(tickets.length===0){tb.innerHTML=`<tr><td colspan="15" class="empty">Sin resultados</td></tr>`;return}
+  tb.innerHTML=tickets.map(t=>{
+    const c=concerts.find(x=>x.id===t.concertId);
+    const p=t.estado==='vendida'?(t.precioVenta||0)-t.precioCompra:null;
+    return`<tr>
+      <td style="cursor:pointer;color:var(--cyan);font-weight:500" onclick="goDetail('${t.concertId}')">${c?.artista||'—'}</td>
+      <td style="font-size:11px;color:var(--text2)">${c?.ciudad||'—'}</td>
+      <td style="font-size:11px">${fd(c?.fecha)}</td>
+      <td>${t.seccion}</td><td>${t.fila}</td><td>${t.asiento}</td>
+      <td><span class="tag">${trunc(t.webCompra,10)}</span></td>
+      <td style="font-size:10px;color:var(--text2)">${trunc(t.numeroPedidoCompra,12)}</td>
+      <td style="font-size:10px;color:var(--text3)">${trunc(t.emailCuenta,16)}</td>
+      <td>${fmt(t.precioCompra)}</td>
+      <td>${badge(t.estado)}</td>
+      <td>${t.precioVenta?fmt(t.precioVenta):'—'}</td>
+      <td style="font-size:11px">${t.tiendaVenta||'—'}</td>
+      <td>${p!==null?`<span class="${pc(p)}">${p>=0?'+':''}${fmt(p)}</span>`:'—'}</td>
+      <td>${t.estado!=='vendida'?`<button class="btn btn-primary btn-sm" onclick="CID='${t.concertId}';openVenta('${t.id}')">Vender</button>`:''}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════
+// RENDER VENTAS
+// ═══════════════════════════════════════════════════
+function renderVentas(){
+  const q=(document.getElementById('sv')?.value||'').toLowerCase();
+  const concerts=gc();
+  const tickets=gt().filter(t=>t.estado==='vendida').sort((a,b)=>(b.fechaVenta||'')>(a.fechaVenta||'')?1:-1);
+  const filtered=tickets.filter(t=>{
+    const c=concerts.find(x=>x.id===t.concertId);
+    if(!yrOk(c?.fecha,YR.ventas)) return false;
+    return!q||[c?.artista,c?.ciudad,t.seccion,t.tiendaVenta].join(' ').toLowerCase().includes(q);
+  });
+  const tb=document.getElementById('ventas-tbody');
+  if(!tb) return;
+  if(filtered.length===0){tb.innerHTML=`<tr><td colspan="10" class="empty">Sin ventas</td></tr>`;return}
+  tb.innerHTML=filtered.map(t=>{
+    const c=concerts.find(x=>x.id===t.concertId);
+    const p=(t.precioVenta||0)-t.precioCompra;
+    const mg=t.precioCompra>0?(p/t.precioCompra*100).toFixed(1):0;
+    return`<tr>
+      <td>${fd(t.fechaVenta)}</td>
+      <td style="cursor:pointer;color:var(--cyan);font-weight:500" onclick="goDetail('${t.concertId}')">${c?.artista||'—'}</td>
+      <td style="font-size:11px;color:var(--text2)">${c?.ciudad||'—'}</td>
+      <td>${t.seccion} F${t.fila} A${t.asiento}</td>
+      <td>${fmt(t.precioCompra)}</td><td>${fmt(t.precioVenta)}</td>
+      <td><span class="tag">${t.tiendaVenta||'—'}</span></td>
+      <td style="font-size:10px;color:var(--text2)">${t.numeroPedidoVenta||'—'}</td>
+      <td><span class="${pc(p)}">${p>=0?'+':''}${fmt(p)}</span></td>
+      <td><span class="${pc(parseFloat(mg))}">${mg>0?'+':''}${mg}%</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════
+// RENDER RESULTADOS
+// ═══════════════════════════════════════════════════
+function renderResultados(){
+  const concerts=gc().filter(c=>yrOk(c.fecha,YR.res));
+  const tickets=gt();
+  const tb=document.getElementById('res-tbody');
+  if(!tb) return;
+  if(concerts.length===0){tb.innerHTML=`<tr><td colspan="10" class="empty">Sin datos</td></tr>`;return}
+  tb.innerHTML=concerts.map(c=>{
+    const ts=tickets.filter(t=>t.concertId===c.id);
+    const vd=ts.filter(t=>t.estado==='vendida');
+    const inv=ts.reduce((s,t)=>s+(t.precioCompra||0),0);
+    const ing=vd.reduce((s,t)=>s+(t.precioVenta||0),0);
+    const p=ing-vd.reduce((s,t)=>s+(t.precioCompra||0),0);
+    const roi=inv>0?((ing-inv)/inv*100).toFixed(1):0;
+    return`<tr>
+      <td style="cursor:pointer;font-weight:600;color:var(--cyan)" onclick="goDetail('${c.id}')">${c.artista}</td>
+      <td style="font-size:11px;color:var(--text2)">${c.ciudad||'—'}</td>
+      <td>${fd(c.fecha)}</td>
+      <td>${ts.length}</td><td>${vd.length}</td><td>${ts.length-vd.length}</td>
+      <td>${fmt(inv)}</td><td>${fmt(ing)}</td>
+      <td><span class="${pc(p)}">${p>=0?'+':''}${fmt(p)}</span></td>
+      <td><span class="${pc(parseFloat(roi))}">${roi>0?'+':''}${roi}%</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════
+// CONCERT CRUD
+// ═══════════════════════════════════════════════════
+function onCChange(){
+  clearTimeout(vsTimer);
+  vsTimer=setTimeout(searchVenue,900);
+}
+async function searchVenue(){
+  const a=document.getElementById('c-art').value.trim();
+  const c=document.getElementById('c-ciu').value.trim();
+  if(!a||!c) return;
+  try{
+    const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(a+' arena '+c)}&format=json&limit=3`,{headers:{'Accept-Language':'es'}});
+    const d=await r.json();
+    if(d&&d.length>0){
+      const v=d[0];
+      venueData={name:v.display_name.split(',')[0],lat:v.lat,lon:v.lon};
+      document.getElementById('vs-txt').innerHTML=`<strong>${venueData.name}</strong><br><span style="font-size:10px;color:var(--text3)">${v.display_name.split(',').slice(0,3).join(',')}</span>`;
+      document.getElementById('vs-box').classList.add('show');
+    }
+  }catch(e){}
+}
+function acceptVenue(){
+  if(venueData.name){
+    document.getElementById('c-rec').value=venueData.name;
+    if(venueData.lat) document.getElementById('c-map').value=`https://maps.google.com/maps?q=${venueData.lat},${venueData.lon}&z=16&output=embed`;
+    document.getElementById('vs-box').classList.remove('show');
+  }
+}
+
+function openModal(id){
+  document.getElementById(id+'-overlay').classList.add('open');
+}
+
+function openConcertModal(){
+  clearCForm();
+  editCID=null;
+  document.getElementById('mc-overlay').classList.add('open');
+}
+
+function editCurConcert(){
+  const c=gc().find(x=>x.id===CID);
+  if(!c) return;
+  editCID=c.id;
+  document.getElementById('c-art').value=c.artista||'';
+  document.getElementById('c-fec').value=c.fecha||'';
+  document.getElementById('c-rec').value=c.recinto||'';
+  document.getElementById('c-ciu').value=c.ciudad||'';
+  document.getElementById('c-map').value=c.mapa||'';
+  document.getElementById('c-not').value=c.notas||'';
+  document.getElementById('mc-title').textContent='Editar concierto';
+  document.getElementById('mc-overlay').classList.add('open');
+}
+
+function clearCForm(){
+  ['c-art','c-fec','c-rec','c-ciu','c-map','c-not'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.value='';
+  });
+  document.getElementById('mc-title').textContent='Nuevo concierto';
+  document.getElementById('vs-box').classList.remove('show');
+}
+
+function saveConcert(){
+  const a=document.getElementById('c-art').value.trim();
+  if(!a){alert('El artista es obligatorio');return}
+  const concerts=gc();
+  const data={
+    id:editCID||DB.id(),
+    artista:a,
+    fecha:document.getElementById('c-fec').value,
+    recinto:document.getElementById('c-rec').value.trim(),
+    ciudad:document.getElementById('c-ciu').value.trim(),
+    mapa:document.getElementById('c-map').value.trim(),
+    notas:document.getElementById('c-not').value.trim(),
+  };
+  if(editCID){const i=concerts.findIndex(c=>c.id===editCID);concerts[i]=data}
+  else concerts.push(data);
+  sc(concerts);
+  closeModal('mc-overlay');
+  clearCForm(); editCID=null;
+  if(CID===data.id) renderDetail(CID);
+  renderConcerts(); renderDash();
+}
+
+function delConcert(id){
+  if(!confirm('¿Eliminar concierto y todas sus entradas?')) return;
+  sc(gc().filter(c=>c.id!==id));
+  st(gt().filter(t=>t.concertId!==id));
+  goTo('conciertos');
+}
+
+// ═══════════════════════════════════════════════════
+// TICKETS CRUD
+// ═══════════════════════════════════════════════════
+function openAddTickets(){
+  ['t-web','t-ped','t-eml','t-sec','t-fil','t-pre'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('t-qty').value=1;
+  document.getElementById('t-fco').value=new Date().toISOString().slice(0,10);
+  document.getElementById('lote-rows').innerHTML='';
+  document.getElementById('mt-overlay').classList.add('open');
+}
+
+function genLote(){
+  const qty=parseInt(document.getElementById('t-qty').value)||1;
+  const fila=document.getElementById('t-fil').value;
+  const precio=document.getElementById('t-pre').value;
+  const c=document.getElementById('lote-rows');
+  if(qty<=1){c.innerHTML='';return}
+  let h=`<p style="font-size:10px;font-family:'DM Mono',monospace;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Personaliza cada entrada</p>`;
+  for(let i=0;i<qty;i++){
+    h+=`<div style="background:var(--bg3);border-radius:var(--r2);padding:8px 10px;margin-bottom:6px;display:flex;align-items:center;gap:8px">
+      <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);width:22px">#${i+1}</span>
+      <div style="flex:1;display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
+        <input type="text" id="lr-a-${i}" placeholder="Asiento" style="font-size:14px;padding:6px 8px">
+        <input type="text" id="lr-f-${i}" placeholder="Fila" value="${fila}" style="font-size:14px;padding:6px 8px">
+        <input type="number" id="lr-p-${i}" placeholder="€" value="${precio}" step="0.01" style="font-size:14px;padding:6px 8px">
+      </div>
+    </div>`;
+  }
+  c.innerHTML=h;
+}
+
+function saveTickets(){
+  if(!CID) return;
+  const qty=parseInt(document.getElementById('t-qty').value)||1;
+  const sec=document.getElementById('t-sec').value.trim();
+  const filaBase=document.getElementById('t-fil').value.trim();
+  const precioTotal=parseFloat(document.getElementById('t-pre').value)||0;
+  const web=document.getElementById('t-web').value.trim();
+  const pedido=document.getElementById('t-ped').value.trim();
+  const email=document.getElementById('t-eml').value.trim();
+  const fcompra=document.getElementById('t-fco').value;
+  const tickets=gt();
+  for(let i=0;i<qty;i++){
+    let fila=filaBase, asiento=String(i+1), precio=r2(precioTotal/qty);
+    if(qty>1){
+      fila=document.getElementById(`lr-f-${i}`)?.value.trim()||filaBase;
+      asiento=document.getElementById(`lr-a-${i}`)?.value.trim()||String(i+1);
+      precio=parseFloat(document.getElementById(`lr-p-${i}`)?.value)||r2(precioTotal/qty);
+    }
+    tickets.push({
+      id:DB.id(),concertId:CID,lote:pedido,
+      seccion:sec,fila,asiento,precioCompra:precio,
+      estado:'disponible',precioVenta:null,fechaVenta:null,
+      webCompra:web,numeroPedidoCompra:pedido,
+      emailCuenta:email,tiendaVenta:'',
+      fechaCompra:fcompra,numeroPedidoVenta:'',
+    });
+  }
+  st(tickets);
+  closeModal('mt-overlay');
+  renderDetail(CID); renderDash(); updateCount();
+}
+
+function toggleRes(id){
+  const ts=gt();
+  const i=ts.findIndex(x=>x.id===id);
+  ts[i].estado=ts[i].estado==='reservada'?'disponible':'reservada';
+  st(ts);
+  renderDetail(CID); renderStock();
+}
+
+function delTicket(id){
+  if(!confirm('¿Eliminar esta entrada?')) return;
+  st(gt().filter(t=>t.id!==id));
+  renderDetail(CID); renderDash(); updateCount();
+}
+
+// ═══════════════════════════════════════════════════
+// VENTA
+// ═══════════════════════════════════════════════════
+function openVenta(tid){
+  const t=gt().find(x=>x.id===tid);
+  if(!t) return;
+  const c=gc().find(x=>x.id===t.concertId);
+  document.getElementById('v-id').value=tid;
+  document.getElementById('v-info').innerHTML=`<div style="background:var(--bg3);border-radius:8px;padding:10px 12px"><div style="font-weight:600;margin-bottom:3px">${c?.artista||''}</div><div style="font-size:11.5px;color:var(--text3)">${t.seccion} · Fila ${t.fila} · Asiento ${t.asiento} · Compra: <strong>${fmt(t.precioCompra)}</strong></div></div>`;
+  document.getElementById('v-pre').value='';
+  document.getElementById('v-fec').value=new Date().toISOString().slice(0,10);
+  document.getElementById('v-tda').value=t.tiendaVenta||'';
+  document.getElementById('v-ped').value=t.numeroPedidoVenta||'';
+  document.getElementById('v-profit').innerHTML='—';
+  document.getElementById('mv-overlay').classList.add('open');
+}
+
+function calcVProfit(){
+  const t=gt().find(x=>x.id===document.getElementById('v-id').value);
+  const v=parseFloat(document.getElementById('v-pre').value)||0;
+  if(!t||!v){document.getElementById('v-profit').innerHTML='—';return}
+  const p=v-t.precioCompra;
+  document.getElementById('v-profit').innerHTML=`<span class="${pc(p)}">${p>=0?'+':''}${fmt(p)}</span>`;
+}
+
+function saveVenta(){
+  const tid=document.getElementById('v-id').value;
+  const pv=parseFloat(document.getElementById('v-pre').value);
+  if(!pv){alert('Introduce el precio de venta');return}
+  const tickets=gt();
+  const i=tickets.findIndex(x=>x.id===tid);
+  tickets[i]={...tickets[i],
+    estado:'vendida',precioVenta:pv,
+    fechaVenta:document.getElementById('v-fec').value,
+    tiendaVenta:document.getElementById('v-tda').value,
+    numeroPedidoVenta:document.getElementById('v-ped').value,
+  };
+  st(tickets);
+  closeModal('mv-overlay');
+  if(CID) renderDetail(CID);
+  renderDash(); renderStock(); renderVentas(); renderResultados();
+}
+
+// ═══════════════════════════════════════════════════
+// WIRE UP "Nuevo concierto" buttons
+// ═══════════════════════════════════════════════════
+// Override openModal for 'mc' to reset form
+const _openModal=openModal;
+function openModal(id){
+  if(id==='mc'){
+    clearCForm(); editCID=null;
+  }
+  document.getElementById(id+'-overlay').classList.add('open');
+}
+
+// Close on overlay click
+document.querySelectorAll('.modal-overlay').forEach(o=>{
+  o.addEventListener('click', e=>{
+    if(e.target===o) o.classList.remove('open');
+  });
+});
+
+// ═══════════════════════════════════════════════════
+// SERVICE WORKER (offline)
+// ═══════════════════════════════════════════════════
+if('serviceWorker' in navigator){
+  const sw=`const C='tv4';self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.addAll([location.pathname])).then(()=>self.skipWaiting()))});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==C).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match(e.request))))});`;
+  const blob=new Blob([sw],{type:'application/javascript'});
+  navigator.serviceWorker.register(URL.createObjectURL(blob),{scope:'./'}).catch(()=>{});
+}
+
+// iOS tip (una vez)
+(function(){
+  const isIOS=/iphone|ipad/i.test(navigator.userAgent);
+  const isSafari=/safari/i.test(navigator.userAgent)&&!/chrome|crios/i.test(navigator.userAgent);
+  if(isIOS&&isSafari&&!navigator.standalone&&!localStorage.getItem('tv4_tip')){
+    setTimeout(()=>{
+      const t=document.createElement('div');
+      t.style.cssText='position:fixed;bottom:calc(var(--sab) + 70px);left:50%;transform:translateX(-50%);background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:11px 16px;z-index:9999;box-shadow:0 4px 24px rgba(0,0,0,.8);max-width:290px;width:88vw;font-size:12px;text-align:center;color:var(--text2)';
+      t.innerHTML='Pulsa <strong style="color:var(--cyan)">Compartir ⬆️</strong> → <strong style="color:var(--cyan)">"Añadir a inicio"</strong> para instalar';
+      const x=document.createElement('button');
+      x.textContent='✕';
+      x.style.cssText='position:absolute;top:5px;right:8px;background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;min-width:24px;min-height:24px';
+      x.onclick=()=>{t.remove();localStorage.setItem('tv4_tip','1')};
+      t.appendChild(x);
+      document.body.appendChild(t);
+      setTimeout(()=>{t.remove();localStorage.setItem('tv4_tip','1')},9000);
+    },3000);
+  }
+})();
+
+// ═══════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════
+initData();
+renderDash();
+updateCount();
+
+// ═══════════════════════════════════════════════════
+// FIREBASE CONFIG
+// ═══════════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey: "AIzaSyDlXV10vK4GwmqznsI8ORnzyFKmf02QKj0",
+  authDomain: "tickets-fe477.firebaseapp.com",
+  projectId: "tickets-fe477",
+  storageBucket: "tickets-fe477.firebasestorage.app",
+  messagingSenderId: "44322953650",
+  appId: "1:44322953650:web:85eaf2a7f348b7fd6cacab",
+  measurementId: "G-NEYVZ3S4EW"
+};
+
+let fbdb = null;
+try {
+  firebase.initializeApp(firebaseConfig);
+  fbdb = firebase.firestore();
+  console.log('Firebase OK');
+} catch(e) {
+  console.warn('Firebase error:', e);
+}
+
+function setSyncStatus(msg, color) {
+  const el = document.getElementById('sync-status');
+  if (el) { el.textContent = msg; el.style.color = color || 'var(--text3)'; }
+  // Reset tras 4s
+  if (msg) setTimeout(() => { if(el) el.textContent = ''; }, 4000);
+}
+
+function setSyncLoading(loading) {
+  const btns = ['btn-sync-up','btn-sync-down','bnav-sync'];
+  btns.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.disabled = loading;
+  });
+}
+
+// ── SUBIR datos a Firebase ──
+async function syncUp() {
+  if (!fbdb) { setSyncStatus('Firebase no disponible', 'var(--red)'); return; }
+  setSyncLoading(true);
+  setSyncStatus('Subiendo...', 'var(--yellow)');
+  try {
+    const concerts = gc();
+    const tickets = gt();
+    await fbdb.collection('ticketvault').doc('data').set({
+      concerts: JSON.stringify(concerts),
+      tickets: JSON.stringify(tickets),
+      updatedAt: new Date().toISOString(),
+      device: navigator.userAgent.includes('iPhone') ? 'iPhone' : 'Web'
+    });
+    setSyncStatus('✓ Subido ' + new Date().toLocaleTimeString('es-ES', {hour:'2-digit',minute:'2-digit'}), 'var(--green)');
+  } catch(e) {
+    setSyncStatus('Error: ' + e.message.slice(0,30), 'var(--red)');
+    console.error(e);
+  }
+  setSyncLoading(false);
+}
+
+// ── BAJAR datos de Firebase ──
+async function syncDown() {
+  if (!fbdb) { setSyncStatus('Firebase no disponible', 'var(--red)'); return; }
+  setSyncLoading(true);
+  setSyncStatus('Descargando...', 'var(--yellow)');
+  try {
+    const doc = await fbdb.collection('ticketvault').doc('data').get();
+    if (!doc.exists) {
+      setSyncStatus('Sin datos en la nube', 'var(--text3)');
+    } else {
+      const d = doc.data();
+      const concerts = JSON.parse(d.concerts || '[]');
+      const tickets = JSON.parse(d.tickets || '[]');
+      sc(concerts); st(tickets);
+      localStorage.setItem('tv4_ok', '1');
+      const ts = d.updatedAt ? new Date(d.updatedAt).toLocaleString('es-ES',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '';
+      setSyncStatus('✓ Bajado ' + ts + (d.device ? ' desde '+d.device : ''), 'var(--cyan)');
+      updateCount();
+      renderDash();
+    }
+  } catch(e) {
+    setSyncStatus('Error: ' + e.message.slice(0,30), 'var(--red)');
+    console.error(e);
+  }
+  setSyncLoading(false);
+}
+
+// ── Auto-sync al cargar: bajar datos si hay en la nube ──
+window.addEventListener('load', async () => {
+  if (!fbdb) return;
+  try {
+    const doc = await fbdb.collection('ticketvault').doc('data').get();
+    if (doc.exists) {
+      const d = doc.data();
+      const remoteTs = d.updatedAt ? new Date(d.updatedAt).getTime() : 0;
+      const localTs = parseInt(localStorage.getItem('tv4_last_sync') || '0');
+      // Solo bajar si los datos en la nube son más recientes
+      if (remoteTs > localTs) {
+        const concerts = JSON.parse(d.concerts || '[]');
+        const tickets = JSON.parse(d.tickets || '[]');
+        sc(concerts); st(tickets);
+        localStorage.setItem('tv4_ok', '1');
+        localStorage.setItem('tv4_last_sync', remoteTs.toString());
+        updateCount();
+        renderDash();
+        setSyncStatus('✓ Sincronizado', 'var(--green)');
+      }
+    }
+  } catch(e) { /* silencioso si no hay internet */ }
+});
+
+
+// ═══════════════════════════════════════════════════
+// CSV EXPORT / IMPORT
+// ═══════════════════════════════════════════════════
+
+function toCSV(arr) {
+  if (!arr || arr.length === 0) return '';
+  const headers = Object.keys(arr[0]);
+  const rows = arr.map(obj =>
+    headers.map(h => {
+      const v = obj[h] == null ? '' : String(obj[h]);
+      return v.includes(',') || v.includes('"') || v.includes('\n')
+        ? '"' + v.replace(/"/g, '""') + '"'
+        : v;
+    }).join(',')
+  );
+  return [headers.join(','), ...rows].join('\n');
+}
+
+function downloadFile(content, filename, mime) {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function exportCSV(type) {
+  const concerts = gc();
+  const tickets = gt();
+  if (type === 'concerts' || type === 'all') {
+    downloadFile(toCSV(concerts), 'conciertos.csv', 'text/csv;charset=utf-8;');
+  }
+  if (type === 'tickets' || type === 'all') {
+    downloadFile(toCSV(tickets), 'entradas.csv', 'text/csv;charset=utf-8;');
+  }
+}
+
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  if (lines.length < 2) return [];
+  const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g,''));
+  return lines.slice(1).map(line => {
+    const fields = [];
+    let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') { inQ = !inQ; }
+      else if (c === ',' && !inQ) { fields.push(cur); cur = ''; }
+      else cur += c;
+    }
+    fields.push(cur);
+    const obj = {};
+    headers.forEach((h, i) => {
+      const v = (fields[i] || '').replace(/^"|"$/g,'').replace(/""/g,'"');
+      obj[h] = v === 'null' ? null : v === '' ? null : v;
+    });
+    return obj;
+  });
+}
+
+function importCSV(type, input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = parseCSV(e.target.result);
+      if (data.length === 0) {
+        setCsvMsg('El archivo está vacío o tiene formato incorrecto', 'var(--red)');
+        return;
+      }
+      if (type === 'concerts') {
+        sc(data);
+        setCsvMsg('✓ ' + data.length + ' conciertos importados', 'var(--green)');
+      } else {
+        st(data);
+        setCsvMsg('✓ ' + data.length + ' entradas importadas', 'var(--green)');
+      }
+      localStorage.setItem('tv4_ok', '1');
+      updateCount(); renderDash();
+      input.value = '';
+    } catch(err) {
+      setCsvMsg('Error: ' + err.message, 'var(--red)');
+    }
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+function setCsvMsg(msg, color) {
+  const el = document.getElementById('csv-msg');
+  if (el) { el.textContent = msg; el.style.color = color || 'var(--text3)'; }
+}
+
+</script>
+
+<!-- ══ MODAL CSV ══ -->
+<div class="modal-overlay" id="mcsv-overlay">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <span class="modal-title">Importar / Exportar CSV</span>
+      <button class="xbtn" onclick="closeModal('mcsv-overlay')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body">
+
+      <!-- EXPORTAR -->
+      <div style="margin-bottom:20px">
+        <div class="card-title" style="margin-bottom:10px;font-size:13px;color:var(--text2);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase">Exportar</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button class="btn btn-ghost" onclick="exportCSV('concerts')" style="justify-content:flex-start;gap:10px">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Descargar conciertos.csv
+          </button>
+          <button class="btn btn-ghost" onclick="exportCSV('tickets')" style="justify-content:flex-start;gap:10px">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Descargar entradas.csv
+          </button>
+          <button class="btn btn-primary" onclick="exportCSV('all')" style="justify-content:flex-start;gap:10px">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Descargar todo (ZIP con ambos CSV)
+          </button>
+        </div>
+      </div>
+
+      <div style="height:1px;background:var(--border);margin:4px 0 20px"></div>
+
+      <!-- IMPORTAR -->
+      <div>
+        <div class="card-title" style="margin-bottom:6px;font-size:13px;color:var(--text2);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase">Importar</div>
+        <p style="font-size:11.5px;color:var(--text3);margin-bottom:12px">Selecciona un CSV exportado previamente. Los datos existentes se <strong style="color:var(--yellow)">reemplazarán</strong>.</p>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div>
+            <label style="font-size:11px;margin-bottom:5px">Importar conciertos (conciertos.csv)</label>
+            <input type="file" id="imp-concerts" accept=".csv" onchange="importCSV('concerts',this)" style="font-size:13px;padding:8px 10px;cursor:pointer">
+          </div>
+          <div>
+            <label style="font-size:11px;margin-bottom:5px">Importar entradas (entradas.csv)</label>
+            <input type="file" id="imp-tickets" accept=".csv" onchange="importCSV('tickets',this)" style="font-size:13px;padding:8px 10px;cursor:pointer">
+          </div>
+        </div>
+        <div id="csv-msg" style="margin-top:10px;font-size:12px;min-height:18px"></div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('mcsv-overlay')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
