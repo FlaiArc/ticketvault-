@@ -1756,29 +1756,35 @@ try {
 function loginGoogle() {
   const btn = document.getElementById('btn-google-login');
   const err = document.getElementById('login-error');
-  btn.style.opacity = '0.6';
-  btn.disabled = true;
-  err.textContent = '';
+  if (btn) { btn.style.opacity = '0.6'; btn.disabled = true; }
+  if (err) err.textContent = 'Redirigiendo a Google...';
 
   const provider = new firebase.auth.GoogleAuthProvider();
   provider.setCustomParameters({ login_hint: ALLOWED_EMAIL });
 
-  fbauth.signInWithPopup(provider)
-    .then(result => {
+  // Usar redirect en lugar de popup — funciona en Safari/iPhone
+  fbauth.signInWithRedirect(provider).catch(e => {
+    if (err) err.textContent = e.message;
+    if (btn) { btn.style.opacity = '1'; btn.disabled = false; }
+  });
+}
+
+// Recoger el resultado del redirect al volver a la app
+if (fbauth) {
+  fbauth.getRedirectResult().then(result => {
+    if (result && result.user) {
       const email = result.user.email;
       if (email !== ALLOWED_EMAIL) {
         fbauth.signOut();
-        err.textContent = 'Cuenta no autorizada: ' + email;
-        btn.style.opacity = '1';
-        btn.disabled = false;
+        const err = document.getElementById('login-error');
+        if (err) err.textContent = 'Cuenta no autorizada: ' + email;
       }
       // onAuthStateChanged lo maneja
-    })
-    .catch(e => {
-      err.textContent = e.code === 'auth/popup-closed-by-user' ? 'Ventana cerrada' : e.message;
-      btn.style.opacity = '1';
-      btn.disabled = false;
-    });
+    }
+  }).catch(e => {
+    const err = document.getElementById('login-error');
+    if (err && e.code !== 'auth/no-auth-event') err.textContent = e.message;
+  });
 }
 
 function logout() {
